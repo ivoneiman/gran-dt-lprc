@@ -29,9 +29,10 @@ export default function SelectorJugador({
       const div = p.real_teams?.name ?? ''
       const matchDiv = filterDiv === 'Todos' || div === filterDiv
       const matchSearch = p.display_name.toLowerCase().includes(search.toLowerCase())
-      return matchSearch && matchDiv
+      const matchPosition = p.position === position
+      return matchSearch && matchDiv && matchPosition
     })
-  }, [players, filterDiv, search])
+  }, [players, filterDiv, search, position])
 
   const isDisabled = (player: Player) => {
     const div = player.real_teams?.name ?? ''

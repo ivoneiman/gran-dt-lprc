@@ -1,6 +1,6 @@
 import AppShell from '@/components/layout/AppShell'
 import { createClient } from '@/lib/supabase/server'
-import { POSITION_LABELS, DIVISIONES, STATUS_LABELS } from '@/types'
+import { POSITION_LABELS, DIVISIONES, STATUS_LABELS, type Player } from '@/types'
 import { cn } from '@/lib/utils'
 
 export const revalidate = 300
@@ -96,7 +96,7 @@ export default async function JugadoresPage({
                   </td>
                 </tr>
               ) : (
-                filtered.map(player => (
+                (filtered as Player[]).map(player => (
                   <tr key={player.id}>
                     <td>
                       <div className="font-condensed font-semibold">{player.display_name}</div>
@@ -121,7 +121,7 @@ export default async function JugadoresPage({
                         'bg-yellow-400/10 text-yellow-400': player.status === 'suspended',
                         'bg-gray-400/10 text-gray-400': player.status === 'unavailable',
                       })}>
-                        {STATUS_LABELS[player.status as keyof typeof STATUS_LABELS]}
+                        {STATUS_LABELS[player.status]}
                       </span>
                     </td>
                     <td className="text-right">

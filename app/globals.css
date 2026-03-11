@@ -1,0 +1,114 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-bebas: 'Bebas Neue', sans-serif;
+  --font-barlow: 'Barlow', sans-serif;
+  --font-barlow-condensed: 'Barlow Condensed', sans-serif;
+}
+
+@layer base {
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-barlow);
+    background-color: #0a1629;
+    color: #f8f8f8;
+    min-height: 100vh;
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); }
+  ::-webkit-scrollbar-thumb { background: #C49B00; border-radius: 3px; }
+}
+
+@layer components {
+  .font-display { font-family: var(--font-bebas); }
+  .font-condensed { font-family: var(--font-barlow-condensed); }
+
+  /* Card base */
+  .card {
+    @apply bg-white/[0.04] border border-lprc-dorado/15 rounded-xl backdrop-blur-sm;
+  }
+
+  /* Gold button */
+  .btn-gold {
+    @apply bg-lprc-dorado text-lprc-azul font-display text-lg tracking-widest
+           px-6 py-2.5 rounded-lg hover:bg-lprc-dorado-dark transition-all
+           hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50
+           disabled:cursor-not-allowed disabled:hover:translate-y-0;
+  }
+
+  /* Outline button */
+  .btn-outline {
+    @apply border border-lprc-dorado text-lprc-dorado font-condensed font-semibold
+           text-sm tracking-wide px-4 py-1.5 rounded-lg
+           hover:bg-lprc-dorado hover:text-lprc-azul transition-all;
+  }
+
+  /* Input */
+  .input-field {
+    @apply w-full bg-white/[0.07] border border-white/15 text-white
+           font-body text-sm px-4 py-3 rounded-lg outline-none
+           focus:border-lprc-dorado transition-colors placeholder:text-white/30;
+  }
+
+  /* Select */
+  .select-field {
+    @apply input-field bg-lprc-azul-mid cursor-pointer;
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-condensed font-bold tracking-wide;
+  }
+
+  /* Table */
+  .data-table { @apply w-full border-collapse; }
+  .data-table th {
+    @apply font-condensed text-xs font-bold tracking-widest uppercase
+           text-lprc-dorado py-2.5 px-3 border-b-2 border-lprc-dorado/30 text-left;
+  }
+  .data-table td {
+    @apply py-2.5 px-3 border-b border-white/[0.06] text-sm;
+  }
+  .data-table tr:hover td { @apply bg-lprc-dorado/[0.04]; }
+
+  /* Section title */
+  .section-title {
+    @apply font-display text-2xl tracking-widest text-lprc-dorado mb-4
+           flex items-center gap-2;
+  }
+
+  /* Stat card */
+  .stat-card {
+    @apply card p-4 text-center flex flex-col items-center justify-center gap-1;
+  }
+  .stat-label {
+    @apply font-condensed text-xs tracking-widest uppercase text-white/40;
+  }
+  .stat-value {
+    @apply font-display text-3xl text-lprc-dorado;
+  }
+
+  /* Field slot shirt */
+  .shirt {
+    @apply w-12 h-12 mx-auto mb-1 rounded-lg border-2 border-lprc-dorado/40
+           bg-lprc-azul flex items-center justify-center
+           font-display text-xl text-lprc-dorado
+           transition-all cursor-pointer relative;
+  }
+  .shirt:hover { @apply scale-110 border-lprc-dorado; }
+  .shirt.empty {
+    @apply bg-black/30 border-dashed border-white/20 text-white/30 text-sm;
+  }
+  .shirt.captain::after {
+    content: 'C';
+    @apply absolute -top-1.5 -right-1.5 bg-lprc-dorado text-lprc-azul
+           w-4 h-4 rounded-full font-display text-[10px]
+           flex items-center justify-center;
+  }
+}

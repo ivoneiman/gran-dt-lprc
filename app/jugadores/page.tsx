@@ -121,7 +121,7 @@ export default async function JugadoresPage({
                         'bg-yellow-400/10 text-yellow-400': player.status === 'suspended',
                         'bg-gray-400/10 text-gray-400': player.status === 'unavailable',
                       })}>
-                        {STATUS_LABELS[player.status]}
+                        {STATUS_LABELS[player.status as keyof typeof STATUS_LABELS]}
                       </span>
                     </td>
                     <td className="text-right">

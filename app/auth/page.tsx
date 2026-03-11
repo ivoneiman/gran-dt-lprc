@@ -49,9 +49,9 @@ export default function AuthPage() {
         <div className="text-center mb-8">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="http://www.laplatarugbyclub.com.ar/img/lprc.svg"
+            src="/logo.png"
             alt="LPRC"
-            className="h-20 mx-auto mb-4 brightness-0 invert"
+            className="h-16 mx-auto mb-4"
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
           <h1 className="font-display text-5xl text-lprc-dorado tracking-widest">GRAN DT</h1>

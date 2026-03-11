@@ -5,6 +5,8 @@
 
 INSERT INTO players (real_team_id, first_name, last_name, position, status, active) VALUES
   (1, 'Pedro', 'Addiechi', 'ALA_BACK_IZQ', 'active', true), -- Primera
+  (1, 'Martin', 'Patat', 'PILAR_DER', 'active', true), -- Primera
+  (1, 'Jeremías', 'Chicherquia', 'PILAR_IZQ', 'active', true),
   (1, 'Francisco', 'Annechini', 'FULLBACK', 'active', true), -- Primera
   (1, 'Manuel', 'Arteche', 'ALA_BACK_DER', 'active', true), -- Primera
   (1, 'Juan Pedro', 'Bernasconi', 'OCTAVO', 'active', true), -- Primera
@@ -59,6 +61,7 @@ INSERT INTO players (real_team_id, first_name, last_name, position, status, acti
   (3, 'Santiago', 'Urrutia', 'ALA_IZQ', 'active', true), -- Pre A
   (3, 'Lautaro', 'Zavatti', 'FULLBACK', 'active', true), -- Pre A
   (3, 'Iñaki', 'Zuloaga', 'ALA_IZQ', 'active', true), -- Pre A
+  (3, 'Fermín', 'Conti', 'PILAR_DER', 'active', true), -- Pre A
   (4, 'Enzo', 'Alarcón', 'ALA_BACK_IZQ', 'active', true), -- Pre B
   (4, 'Marcos', 'Alconada', 'CENTRO_IZQ', 'active', true), -- Pre B
   (4, 'Felipe', 'Alonso', 'MEDIO_SCRUM', 'active', true), -- Pre B
@@ -66,7 +69,7 @@ INSERT INTO players (real_team_id, first_name, last_name, position, status, acti
   (4, 'Tomás', 'Arteche', 'ALA_BACK_IZQ', 'active', true), -- Pre B
   (4, 'Bautista', 'Baridón', 'ALA_IZQ', 'active', true), -- Pre B
   (4, 'Octavio', 'Barrera', 'MEDIO_SCRUM', 'active', true), -- Pre B
-  (4, 'Ignacio', 'Barreyra', 'PILAR_IZQ', 'active', true), -- Pre B
+  (4, 'Ignacio', 'Barreyra', 'PILAR_DER', 'active', true), -- Pre B
   (4, 'José', 'Bernasconi', 'APERTURA', 'active', true), -- Pre B
   (4, 'Máximo', 'Bertolo', 'MEDIO_SCRUM', 'active', true), -- Pre B
   (4, 'Antonio', 'Boccadoro', 'CENTRO_IZQ', 'active', true), -- Pre B
@@ -80,8 +83,6 @@ INSERT INTO players (real_team_id, first_name, last_name, position, status, acti
   (4, 'Bautista', 'Castagnet', 'ALA_IZQ', 'active', true), -- Pre B
   (4, 'Francisco', 'Castagnet', 'CENTRO_IZQ', 'active', true), -- Pre B
   (4, 'Lautaro', 'Cañon', 'MEDIO_SCRUM', 'active', true), -- Pre B
-  (4, 'Jeremías', 'Chicherquia', 'PILAR_IZQ', 'active', true), -- Pre B
-  (4, 'Fermín', 'Conti', 'PILAR_IZQ', 'active', true), -- Pre B
   (4, 'Agustin', 'Cufré', 'ALA_IZQ', 'active', true), -- Pre B
   (4, 'Salvador', 'Curuchaga', 'ALA_IZQ', 'active', true), -- Pre B
   (4, 'Alessandro Fermin', 'D', 'APERTURA', 'active', true), -- Pre B
@@ -109,16 +110,14 @@ INSERT INTO players (real_team_id, first_name, last_name, position, status, acti
   (4, 'Luca', 'Marrodan', 'PILAR_DER', 'active', true), -- Pre B
   (4, 'Marco', 'Musi', 'ALA_BACK_IZQ', 'active', true), -- Pre B
   (4, 'Ivo', 'Neiman', 'CENTRO_IZQ', 'active', true), -- Pre B
-  (4, 'Juan', 'Nicolleti', 'PILAR_IZQ', 'active', true), -- Pre B
+  (4, 'Juan', 'Nicolleti', 'PILAR_DER', 'active', true), -- Pre B
   (4, 'Joaquin', 'Nuñez', 'HOOKER', 'active', true), -- Pre B
   (4, 'Tomás', 'Ostrofsky', 'SEGUNDO_LINE_IZQ', 'active', true), -- Pre B
   (4, 'Valentin', 'Ozog', 'SEGUNDO_LINE_IZQ', 'active', true), -- Pre B
   (4, 'Manuel', 'Paradela', 'FULLBACK', 'active', true), -- Pre B
   (4, 'Felipe', 'Pastor', 'MEDIO_SCRUM', 'active', true), -- Pre B
-  (4, 'Martin', 'Patat', 'PILAR_IZQ', 'active', true), -- Pre B
   (4, 'Francisco', 'Paz', 'CENTRO_IZQ', 'active', true), -- Pre B
   (4, 'Juan', 'Paús', 'PILAR_IZQ', 'active', true), -- Pre B
-  (4, 'Roman', 'Pertuso', 'PILAR_IZQ', 'active', true), -- Pre B
   (4, 'Bautista', 'Renga', 'PILAR_IZQ', 'active', true), -- Pre B
   (4, 'Matías', 'Rivademar', 'ALA_BACK_IZQ', 'active', true), -- Pre B
   (4, 'Manuel', 'Rodriguez', 'PILAR_IZQ', 'active', true), -- Pre B
@@ -127,7 +126,6 @@ INSERT INTO players (real_team_id, first_name, last_name, position, status, acti
   (4, 'Lautaro', 'Roman', 'PILAR_IZQ', 'active', true), -- Pre B
   (4, 'Franco', 'Ronco', 'APERTURA', 'active', true), -- Pre B
   (4, 'Bautista', 'Saavedra', 'MEDIO_SCRUM', 'active', true), -- Pre B
-  (4, 'Ignacio', 'Scarpinelli', 'PILAR_IZQ', 'active', true), -- Pre B
   (4, 'Joaquin', 'Sebastia', 'PILAR_IZQ', 'active', true), -- Pre B
   (4, 'Juan Cruz', 'Sorarain', 'ALA_IZQ', 'active', true), -- Pre B
   (4, 'Facundo', 'Suarez', 'ALA_IZQ', 'active', true), -- Pre B
@@ -142,6 +140,8 @@ INSERT INTO players (real_team_id, first_name, last_name, position, status, acti
   (4, 'Franco', 'Zgrablich', 'CENTRO_DER', 'active', true), -- Pre B
   (5, 'Matías', 'Alonso', 'FULLBACK', 'active', true), -- Pre C
   (5, 'Tomás', 'Alonso', 'SEGUNDO_LINE_IZQ', 'active', true), -- Pre C
+  (5, 'Ignacio', 'Scarpinelli', 'PILAR_DER', 'active', true), -- Pre C
+  (5, 'Roman', 'Pertuso', 'PILAR_DER', 'active', true), -- Pre C
   (5, 'Antonio', 'Cancela', 'ALA_IZQ', 'active', true), -- Pre C
   (5, 'Valentino', 'Caseres Ipiña', 'HOOKER', 'active', true), -- Pre C
   (5, 'Lautaro', 'Cáseres', 'HOOKER', 'active', true), -- Pre C

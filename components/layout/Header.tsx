@@ -44,9 +44,9 @@ export default function Header() {
         <Link href="/" className="flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="http://www.laplatarugbyclub.com.ar/img/lprc.svg"
+            src="/logo.png"
             alt="LPRC"
-            className="h-9 brightness-0 invert"
+            className="h-9"
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
           <div>

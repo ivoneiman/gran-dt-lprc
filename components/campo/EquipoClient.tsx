@@ -12,19 +12,23 @@ import { cn } from '@/lib/utils'
 export default function EquipoClient() {
   const supabase = createClient()
 
+  // Estados locales
   const [players, setPlayers] = useState<Player[]>([])
   const [season, setSeason] = useState<Season | null>(null)
   const [currentGw, setCurrentGw] = useState<Gameweek | null>(null)
   const [fantasyTeam, setFantasyTeam] = useState<FantasyTeam | null>(null)
+  const [teamName, setTeamName] = useState<string>('')
   const [snapshot, setSnapshot] = useState<FantasyTeamSnapshot | null>(null)
   const [transferWindow, setTransferWindow] = useState<TransferWindow | null>(null)
   const [selection, setSelection] = useState<TeamSelection>({ slots: {}, captain_player_id: null })
   const [activeSlot, setActiveSlot] = useState<PlayerPosition | null>(null)
+  const [showCaptainSelector, setShowCaptainSelector] = useState(false)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'ok' | 'err' | 'warn'; text: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const [isLocked, setIsLocked] = useState(false)
 
+  // Carga inicial de datos
   const load = useCallback(async () => {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
@@ -80,6 +84,7 @@ export default function EquipoClient() {
 
   useEffect(() => { load() }, [load])
 
+  // Funciones de manejo de eventos y lógica de guardado de equipo.
   const handleSave = async () => {
     const error = validateTeamSelection(selection, players as { id: number; real_teams?: { name: string } }[])
     if (error) { setMessage({ type: 'err', text: error }); return }
@@ -100,10 +105,10 @@ export default function EquipoClient() {
     if (!user || !season || !currentGw) return
 
     try {
-      // asegurar profile
+      // asegurar profile y actualizar nombre de equipo
       const { data: existingProfile } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, team_name')
         .eq('id', user.id)
         .maybeSingle()
 
@@ -115,9 +120,18 @@ export default function EquipoClient() {
             full_name: user.user_metadata?.full_name ?? '',
             nickname: user.user_metadata?.nickname ?? null,
             is_admin: false,
+            team_name: teamName,
           })
 
         if (profileErr) throw profileErr
+      } else {
+        // actualizar nombre si cambió
+        if (existingProfile.team_name !== teamName) {
+          await supabase
+            .from('profiles')
+            .update({ team_name: teamName })
+            .eq('id', user.id)
+        }
       }
 
       // Upsert fantasy_team
@@ -129,6 +143,7 @@ export default function EquipoClient() {
         if (ftErr) throw ftErr
         ftId = ft.id
         setFantasyTeam(ft)
+        setTeamName(ft.name ?? '')
       }
 
     // Create or update snapshot with save count
@@ -197,12 +212,18 @@ export default function EquipoClient() {
     }
   }
 
+  // Cálculos derivados de estado para renderizado y lógica de UI
   const divCount = getDivisionCount(selection, players as { id: number; real_teams?: { name: string } }[])
   const selectedCount = Object.values(selection.slots).filter(Boolean).length
   const saveCount = snapshot?.save_count ?? 0
   const remainingChanges = Math.max(0, 3 - saveCount)
   const canEdit = !isLocked && currentGw?.status === 'open' && remainingChanges > 0
-
+ // Obtener objetos de jugador seleccionados para mostrar nombres en stats y validaciones
+  const selectedPlayers = Object.values(selection.slots)
+    .filter(Boolean)
+    .map((playerId) => players.find((p) => p.id === playerId))
+    .filter(Boolean) as Player[]
+ // si está cargando datos, mostrar indicador de carga
   if (loading) return (
     <div className="flex items-center justify-center h-64">
       <div className="font-display text-2xl text-lprc-dorado tracking-widest animate-pulse">CARGANDO...</div>
@@ -227,6 +248,22 @@ export default function EquipoClient() {
               : <span className="text-white/30">Sin elegir</span>
             }
           </div>
+
+          {canEdit && (
+            <button
+              type="button"
+              onClick={() => {
+                if (selectedPlayers.length === 0) {
+                  setMessage({ type: 'warn', text: 'Seleccioná un jugador para poder elegir un capitán.' })
+                  return
+                }
+                setShowCaptainSelector((prev) => !prev)
+              }}
+              className="mt-2 text-xs font-condensed uppercase text-lprc-dorado hover:text-lprc-dorado-dark transition-colors"
+            >
+              Seleccionar Capitán
+            </button>
+          )}
         </div>
         <div className="stat-card">
           <div className="stat-label">Cambios</div>
@@ -272,7 +309,7 @@ export default function EquipoClient() {
         />
 
         {/* Sidebar */}
-        <div className="space-y-4">
+          <div className="space-y-4">
           {/* Division counts */}
           <div className="card p-4">
             <div className="font-condensed text-xs tracking-widest text-white/40 uppercase mb-3">Divisiones</div>
@@ -304,10 +341,68 @@ export default function EquipoClient() {
             </div>
           </div>
 
+          
+          {showCaptainSelector && (
+            <div className="card p-4">
+              <div className="font-condensed text-xs tracking-widest text-white/40 uppercase mb-3">
+                Elegir Capitán
+              </div>
+
+              {selectedPlayers.length === 0 ? (
+                <div className="font-condensed text-sm text-white/40">
+                  Seleccioná un jugador para poder elegir un capitán.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {selectedPlayers.map((player) => {
+                    const isCaptain = selection.captain_player_id === player.id
+
+                    return (
+                      <button
+                        key={player.id}
+                        type="button"
+                        onClick={() => {
+                          setSelection((prev) => ({
+                            ...prev,
+                            captain_player_id: player.id,
+                          }))
+                          setShowCaptainSelector(false)
+                        }}
+                        className={cn(
+                          'w-full text-left rounded-lg px-3 py-2 transition-all border',
+                          isCaptain
+                            ? 'border-lprc-dorado bg-lprc-dorado/10 text-lprc-dorado'
+                            : 'border-white/10 bg-white/[0.03] text-white/70 hover:border-lprc-dorado/40 hover:text-white'
+                        )}
+                      >
+                        <div className="font-condensed font-semibold">
+                          {player.first_name} {player.last_name}
+                        </div>
+                        <div className="text-xs text-white/40">
+                          {player.real_teams?.name ?? 'Sin división'}
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
           {canEdit && (
-            <button onClick={handleSave} disabled={saving} className="btn-gold w-full">
-              {saving ? 'Guardando...' : '💾 Guardar Equipo'}
-            </button>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-white/70">Nombre del equipo</label>
+              <input
+                type="text"
+                value={teamName}
+                onChange={(e) => setTeamName(e.target.value)}
+                className="w-full rounded bg-white/5 text-white placeholder-white/40 p-2"
+                placeholder="Ej. Los Tigres"
+              />
+              <button onClick={handleSave} disabled={saving} className="btn-gold w-full">
+                {saving ? 'Guardando...' : '💾 Guardar Equipo'}
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -318,12 +413,24 @@ export default function EquipoClient() {
           position={activeSlot}
           players={players}
           selection={selection}
-          onSelect={(pos, id, targetDiv) => {
-            setSelection(prev => ({
-              ...prev,
-              slots: { ...prev.slots, [pos]: id },
-              slotDivisions: { ...(prev.slotDivisions ?? {}), [pos]: targetDiv }
-            }))
+          onSelect={(pos, id, targetDiv) => { 
+            setSelection(prev => {
+              const previousPlayerId = prev.slots[pos]
+              const removedCaptain = prev.captain_player_id === previousPlayerId && previousPlayerId !== id
+              if (removedCaptain){
+                setMessage({ type: 'warn', text: 'El capitán fue removido. Elegí uno nuevo.' })
+              }
+
+              return {
+                ...prev,
+                slots: { ...prev.slots, [pos]: id },
+                slotDivisions: { ...(prev.slotDivisions ?? {}), [pos]: targetDiv },
+                captain_player_id:
+                  prev.captain_player_id === previousPlayerId && previousPlayerId !== id
+                    ? null
+                    : prev.captain_player_id
+              }
+            })
             setActiveSlot(null)
           }}
           onClose={() => setActiveSlot(null)}

@@ -100,6 +100,26 @@ export default function EquipoClient() {
     if (!user || !season || !currentGw) return
 
     try {
+      // asegurar profile
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (!existingProfile) {
+        const { error: profileErr } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            full_name: user.user_metadata?.full_name ?? '',
+            nickname: user.user_metadata?.nickname ?? null,
+            is_admin: false,
+          })
+
+        if (profileErr) throw profileErr
+      }
+
       // Upsert fantasy_team
       let ftId = fantasyTeam?.id
       if (!ftId) {
@@ -166,7 +186,12 @@ export default function EquipoClient() {
       const leftChanges = Math.max(0, 3 - usedChanges)
       setMessage({ type: 'ok', text: `✅ Equipo guardado correctamente. Te quedan ${leftChanges} cambios.` })
     } catch (e: unknown) {
-      setMessage({ type: 'err', text: e instanceof Error ? e.message : 'Error al guardar' })
+      console.error('ERROR GUARDANDO EQUIPO:', e)
+      if (typeof e === 'object' && e !== null && 'message' in e) {
+        setMessage({ type: 'err', text: String((e as { message: unknown }).message) })
+      } else {
+        setMessage({ type: 'err', text: 'Error al guardar' })
+      }
     } finally {
       setSaving(false)
     }

@@ -10,6 +10,7 @@ export default function AuthPage() {
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
   const [form, setForm] = useState({ email: '', password: '', full_name: '' })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -19,13 +20,28 @@ export default function AuthPage() {
 
     try {
       if (mode === 'register') {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
         options: { data: { full_name: form.full_name } }
       })
 
       if (error) throw error
+
+      const newUserId = data.user?.id
+
+      if (newUserId) {
+        const { error: profileErr } = await supabase
+          .from('profiles')
+          .upsert({
+            id: newUserId,
+            full_name: form.full_name,
+            nickname: null,
+            is_admin: false,
+          })
+
+        if (profileErr) throw profileErr
+      }
 
       const { error: loginError } = await supabase.auth.signInWithPassword({
         email: form.email,
@@ -122,15 +138,26 @@ export default function AuthPage() {
               <label className="font-condensed text-xs tracking-widest text-white/40 uppercase block mb-1.5">
                 Contraseña
               </label>
-              <input
-                className="input-field"
-                type="password"
-                placeholder="Mínimo 6 caracteres"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                required
-                minLength={6}
-              />
+
+              <div className="relative">
+                <input
+                  className="input-field pr-14"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Mínimo 6 caracteres"
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  required
+                  minLength={6}
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-condensed uppercase text-white/50 hover:text-white"
+                >
+                  {showPassword ? 'Ocultar' : 'Ver'}
+                </button>
+              </div>
             </div>
 
             {error && (

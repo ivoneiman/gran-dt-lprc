@@ -19,14 +19,24 @@ export default function AuthPage() {
 
     try {
       if (mode === 'register') {
-        const { error } = await supabase.auth.signUp({
-          email: form.email,
-          password: form.password,
-          options: { data: { full_name: form.full_name } }
-        })
-        if (error) throw error
-        setError('✅ Revisá tu email para confirmar tu cuenta.')
-      } else {
+      const { error } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+        options: { data: { full_name: form.full_name } }
+      })
+
+      if (error) throw error
+
+      const { error: loginError } = await supabase.auth.signInWithPassword({
+        email: form.email,
+        password: form.password,
+      })
+
+      if (loginError) throw loginError
+
+      router.push('/')
+      router.refresh()
+    } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: form.email,
           password: form.password,

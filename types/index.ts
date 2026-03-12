@@ -108,13 +108,15 @@ export interface FantasyTeam {
   profiles?: Profile
 }
 
-export interface FantasyTeamSnapshot {
+export type FantasyTeamSnapshot = {
   id: number
   fantasy_team_id: number
   gameweek_id: number
   captain_player_id: number
   created_at: string
   locked_at: string | null
+  save_count: number
+  last_saved_at: string | null
 }
 
 export interface FantasyTeamSnapshotPlayer {

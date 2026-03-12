@@ -107,7 +107,7 @@ INSERT INTO players (real_team_id, first_name, last_name, position, status, acti
   (5, 'Geronimo', 'Dettler', 'ALA_BACK_IZQ', 'active', true), -- Pre C
   (5, 'Eduardo', 'Ferrario', 'ALA_DER', 'active', true), -- Pre C
   (5, 'Máximo', 'Festa', 'APERTURA', 'active', true), -- Pre C
-  (5, 'Bes Tomás', 'Garcia', 'PILAR_IZQ', 'active', true), -- Pre C
+  (5, 'Tomás', 'Garcia Bes', 'PILAR_IZQ', 'active', true), -- Pre C
   (5, 'Larcher Augusto', 'Garcia', 'FULLBACK', 'active', true), -- Pre C
   (5, 'Tomás', 'Giambruni', 'CENTRO_IZQ', 'active', true), -- Pre C
   (5, 'Marcos', 'Gomila', 'ALA_IZQ', 'active', true), -- Pre C
@@ -127,7 +127,7 @@ INSERT INTO players (real_team_id, first_name, last_name, position, status, acti
   (5, 'Pedro', 'Uslenghi', 'ALA_IZQ', 'active', true), -- Pre C
   (5, 'Matías', 'Alonso', 'FULLBACK', 'active', true), -- Pre C
   (5, 'Tomás', 'Alonso', 'SEGUNDO_LINE_IZQ', 'active', true), -- Pre C
-  (5, 'Lazzari Dino', 'De', 'ALA_BACK_IZQ', 'active', true), -- Pre C
+  (5, 'Dino', 'De Lazzari', 'ALA_BACK_IZQ', 'active', true), -- Pre C
   (5, 'Manuel', 'Rodriguez', 'PILAR_IZQ', 'active', true), -- Pre C
   (5, 'Ignacio', 'Scarpinelli', 'PILAR_DER', 'active', true), -- Pre C
   (5, 'Manuel', 'García Monaco', 'MEDIO_SCRUM', 'active', true), -- Pre C

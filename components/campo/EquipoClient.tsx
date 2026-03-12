@@ -70,10 +70,11 @@ export default function EquipoClient() {
         setSnapshot(snap)
         const slots: Partial<Record<PlayerPosition, number>> = {}
         const slotDivisions: Partial<Record<PlayerPosition, string>> = {}
-        for (const sp of (snap as { fantasy_team_snapshot_players: { player_id: number; players: Player }[] }).fantasy_team_snapshot_players) {
+        for (const sp of (snap as { fantasy_team_snapshot_players: { player_id: number; players: Player; target_division?: string }[] }).fantasy_team_snapshot_players) {
           const pos = sp.players.position as PlayerPosition
           slots[pos] = sp.player_id
-          slotDivisions[pos] = sp.players.real_teams?.name
+          // Use stored target_division if present, otherwise fallback to player's original division
+          slotDivisions[pos] = sp.target_division ?? sp.players.real_teams?.name
         }
         setSelection({ slots, slotDivisions, captain_player_id: snap.captain_player_id })
         setIsLocked(!!snap.locked_at)
@@ -192,6 +193,8 @@ export default function EquipoClient() {
         player_id: selection.slots[pos]!,
         slot_order: i + 1,
         is_starter: true,
+        // Preserve the division the user assigned for this slot (if any)
+        target_division: selection.slotDivisions?.[pos] ?? null,
       })).filter(r => r.player_id)
 
       const { error: spErr } = await supabase.from('fantasy_team_snapshot_players').insert(rows)

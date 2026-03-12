@@ -154,6 +154,10 @@ CREATE TABLE IF NOT EXISTS fantasy_team_snapshot_players (
   UNIQUE(snapshot_id, slot_order)
 );
 
+-- Store the division (or target division) a player was assigned to in the snapshot.
+ALTER TABLE fantasy_team_snapshot_players
+  ADD COLUMN IF NOT EXISTS target_division TEXT;
+
 -- ─── MÓDULO D: SCORING ────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS scoring_rules (
@@ -201,6 +205,132 @@ CREATE TABLE IF NOT EXISTS leaderboard_snapshots (
   rank_position     INT NOT NULL,
   snapshot_at       TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Tabla que registra la acumulación de puntos por usuario y fecha
+CREATE TABLE IF NOT EXISTS user_daily_points (
+  id          SERIAL PRIMARY KEY,
+  user_id     UUID NOT NULL REFERENCES profiles(id),
+  date        DATE NOT NULL,
+  points_total NUMERIC(8,2) NOT NULL DEFAULT 0,
+  UNIQUE(user_id, date)
+);
+
+-- Tabla que almacena el total de puntos de todos los usuarios por fecha
+CREATE TABLE IF NOT EXISTS date_totals (
+  id          SERIAL PRIMARY KEY,
+  date        DATE NOT NULL UNIQUE,
+  points_total NUMERIC(8,2) NOT NULL DEFAULT 0
+);
+
+-- RLS policies for user_daily_points
+ALTER TABLE user_daily_points ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Perfil: ver propio" ON user_daily_points
+  FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Perfil: insertar propio" ON user_daily_points
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Perfil: actualizar propio" ON user_daily_points
+  FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Perfil: borrar propio" ON user_daily_points
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- RLS policies for date_totals (public read, admin write)
+ALTER TABLE date_totals ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Público: ver" ON date_totals FOR SELECT USING (true);
+CREATE POLICY "Admin: gestionar" ON date_totals
+  FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin));
+
+-- Modify close_gameweek to insert into user_daily_points and date_totals
+CREATE OR REPLACE FUNCTION close_gameweek(p_gameweek_id INT)
+RETURNS void LANGUAGE plpgsql AS $$
+DECLARE v_season_id INT;
+BEGIN
+  SELECT season_id INTO v_season_id FROM gameweeks WHERE id = p_gameweek_id;
+
+  -- 1. Calcular puntajes de jugadores
+  INSERT INTO player_gameweek_scores (season_id, gameweek_id, player_id, final_points, calculated_at)
+  SELECT v_season_id, p_gameweek_id, p.id, calculate_player_score(p.id, p_gameweek_id), now()
+  FROM players p
+  ON CONFLICT (gameweek_id, player_id)
+  DO UPDATE SET final_points = EXCLUDED.final_points, calculated_at = now();
+
+  -- 2. Calcular puntajes de equipos fantasy
+  INSERT INTO fantasy_team_gameweek_scores
+    (fantasy_team_id, gameweek_id, raw_points, captain_bonus_points, final_points, calculated_at)
+  SELECT
+    snap.fantasy_team_id,
+    p_gameweek_id,
+    COALESCE(SUM(pgs.final_points), 0),
+    COALESCE(SUM(CASE WHEN sp.player_id = snap.captain_player_id THEN pgs.final_points ELSE 0 END), 0),
+    COALESCE(SUM(pgs.final_points), 0) +
+      COALESCE(SUM(CASE WHEN sp.player_id = snap.captain_player_id THEN pgs.final_points ELSE 0 END), 0),
+    now()
+  FROM fantasy_team_snapshots snap
+  JOIN fantasy_team_snapshot_players sp ON sp.snapshot_id = snap.id
+  LEFT JOIN player_gameweek_scores pgs ON pgs.player_id = sp.player_id AND pgs.gameweek_id = p_gameweek_id
+  WHERE snap.gameweek_id = p_gameweek_id
+  GROUP BY snap.fantasy_team_id, snap.captain_player_id
+  ON CONFLICT (fantasy_team_id, gameweek_id)
+  DO UPDATE SET
+    raw_points = EXCLUDED.raw_points,
+    captain_bonus_points = EXCLUDED.captain_bonus_points,
+    final_points = EXCLUDED.final_points,
+    calculated_at = now();
+
+  -- 3. Generar ranking snapshot
+  INSERT INTO leaderboard_snapshots
+    (season_id, gameweek_id, fantasy_team_id, user_id, display_name, points_this_week, points_total, rank_position)
+  WITH totals AS (
+    SELECT ft.id AS ft_id, ft.user_id,
+           COALESCE(pr.nickname, pr.full_name) AS dname,
+           COALESCE(SUM(ftgs.final_points), 0) AS total
+    FROM fantasy_teams ft
+    JOIN profiles pr ON pr.id = ft.user_id
+    LEFT JOIN fantasy_team_gameweek_scores ftgs ON ftgs.fantasy_team_id = ft.id
+    WHERE ft.season_id = v_season_id
+    GROUP BY ft.id, ft.user_id, dname
+  ),
+  this_week AS (
+    SELECT fantasy_team_id, final_points AS week_pts
+    FROM fantasy_team_gameweek_scores
+    WHERE gameweek_id = p_gameweek_id
+  )
+  SELECT
+    v_season_id, p_gameweek_id, t.ft_id, t.user_id, t.dname,
+    COALESCE(w.week_pts, 0),
+    t.total,
+    RANK() OVER (ORDER BY t.total DESC)
+  FROM totals t
+  LEFT JOIN this_week w ON w.fantasy_team_id = t.ft_id;
+
+  -- 4. Actualizar total en fantasy_teams
+  UPDATE fantasy_teams ft
+  SET total_points = (
+    SELECT COALESCE(SUM(final_points), 0)
+    FROM fantasy_team_gameweek_scores
+    WHERE fantasy_team_id = ft.id
+  )
+  WHERE season_id = v_season_id;
+
+  -- 5. Insertar acumulación de puntos por usuario y fecha
+  INSERT INTO user_daily_points (user_id, date, points_total)
+  SELECT ft.user_id, gw.ends_at, ft.total_points
+  FROM fantasy_teams ft
+  JOIN gameweeks gw ON gw.id = p_gameweek_id
+  ON CONFLICT (user_id, date) DO UPDATE SET points_total = EXCLUDED.points_total;
+
+  -- 6. Actualizar total de puntos por fecha
+  INSERT INTO date_totals (date, points_total)
+  SELECT gw.ends_at, SUM(udp.points_total)
+  FROM user_daily_points udp
+  JOIN gameweeks gw ON gw.id = p_gameweek_id
+  WHERE udp.date = gw.ends_at
+  GROUP BY gw.ends_at
+  ON CONFLICT (date) DO UPDATE SET points_total = EXCLUDED.points_total;
+
+  -- 7. Marcar fecha como cerrada
+  UPDATE gameweeks SET status = 'closed' WHERE id = p_gameweek_id;
+END;
+$$;
 
 -- ─── SCORING ENGINE ───────────────────────────────────────────
 

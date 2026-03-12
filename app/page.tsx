@@ -28,6 +28,27 @@ export default async function HomePage() {
     .order('points_total', { ascending: false })
     .limit(5)
 
+  // Check if any gameweeks have been closed
+  const { data: closedGw } = await supabase
+    .from('gameweeks')
+    .select('id')
+    .eq('season_id', season?.id ?? 0)
+    .eq('status', 'closed')
+    .order('number')
+    .limit(1)
+    .maybeSingle()
+
+  // If no closed dates, fetch assembled teams ordered alphabetically
+  let assembledTeams = [] as any[]
+  if (!closedGw) {
+    const { data: teams } = await supabase
+      .from('fantasy_teams')
+      .select('*')
+      .eq('season_id', season?.id ?? 0)
+      .order('team_name')
+    assembledTeams = teams ?? []
+  }
+
   return (
     <AppShell>
       {/* Hero */}
@@ -119,6 +140,27 @@ export default async function HomePage() {
                   )}>{i + 1}</span>
                   <span className="font-condensed font-semibold text-sm flex-1">{entry.display_name}</span>
                   <span className="font-display text-xl text-lprc-dorado">{entry.points_total}</span>
+                </div>
+              ))}
+              <Link href="/tabla" className="btn-outline w-full text-center mt-2 block py-2">
+                Ver tabla completa →
+              </Link>
+            </div>
+          ) : assembledTeams && assembledTeams.length > 0 ? (
+            <div className="space-y-2">
+              {assembledTeams.map((team, i) => (
+                <div key={team.id} className={cn(
+                  'flex items-center gap-3 p-2.5 rounded-lg',
+                  i === 0 && 'bg-lprc-dorado/10 border border-lprc-dorado/20'
+                )}>
+                  <span className={cn(
+                    'w-7 h-7 rounded-full flex items-center justify-center font-display text-base shrink-0',
+                    i === 0 ? 'bg-lprc-dorado text-lprc-azul' :
+                    i === 1 ? 'bg-gray-300 text-gray-700' :
+                    i === 2 ? 'bg-amber-600 text-white' :
+                    'bg-white/10 text-white/40 text-sm'
+                  )}>{i + 1}</span>
+                  <span className="font-condensed font-semibold text-sm flex-1">{team.team_name} ({team.nickname})</span>
                 </div>
               ))}
               <Link href="/tabla" className="btn-outline w-full text-center mt-2 block py-2">

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Campo from '@/components/campo/Campo'
 import SelectorJugador from '@/components/campo/SelectorJugador'
+import CaptainSelectorModal from '@/components/campo/CaptainSelectorModal'
 import { ALL_POSITIONS, DIVISIONES, type PlayerPosition, type TeamSelection } from '@/types'
 import type { Player, FantasyTeam, FantasyTeamSnapshot, Season, Gameweek, TransferWindow } from '@/types'
 import { validateTeamSelection, getDivisionCount } from '@/lib/utils'
@@ -343,50 +344,15 @@ export default function EquipoClient() {
 
           
           {showCaptainSelector && (
-            <div className="card p-4">
-              <div className="font-condensed text-xs tracking-widest text-white/40 uppercase mb-3">
-                Elegir Capitán
-              </div>
-
-              {selectedPlayers.length === 0 ? (
-                <div className="font-condensed text-sm text-white/40">
-                  Seleccioná un jugador para poder elegir un capitán.
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {selectedPlayers.map((player) => {
-                    const isCaptain = selection.captain_player_id === player.id
-
-                    return (
-                      <button
-                        key={player.id}
-                        type="button"
-                        onClick={() => {
-                          setSelection((prev) => ({
-                            ...prev,
-                            captain_player_id: player.id,
-                          }))
-                          setShowCaptainSelector(false)
-                        }}
-                        className={cn(
-                          'w-full text-left rounded-lg px-3 py-2 transition-all border',
-                          isCaptain
-                            ? 'border-lprc-dorado bg-lprc-dorado/10 text-lprc-dorado'
-                            : 'border-white/10 bg-white/[0.03] text-white/70 hover:border-lprc-dorado/40 hover:text-white'
-                        )}
-                      >
-                        <div className="font-condensed font-semibold">
-                          {player.first_name} {player.last_name}
-                        </div>
-                        <div className="text-xs text-white/40">
-                          {player.real_teams?.name ?? 'Sin división'}
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
+            <CaptainSelectorModal
+              selectedPlayers={selectedPlayers}
+              captainId={selection.captain_player_id}
+              onSetCapitan={(id) => {
+                setSelection((prev) => ({ ...prev, captain_player_id: id }))
+                setShowCaptainSelector(false)
+              }}
+              onClose={() => setShowCaptainSelector(false)}
+            />
           )}
 
           {canEdit && (

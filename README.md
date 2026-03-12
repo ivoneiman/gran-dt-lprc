@@ -1,213 +1,222 @@
-# 🏉 Gran DT LPRC — Guía de Setup Completa
+# 🏉 Gran DT LPRC
 
-## Qué es este proyecto
+> Plataforma de fantasy rugby construida con tecnologías web modernas. Crea tu propia liga de fantasy rugby, administra fechas, registra estadísticas de jugadores y calcula puntajes automáticamente.
 
-Aplicación web de fantasy rugby para La Plata Rugby Club. Construida con:
-- **Next.js 14** (frontend)
-- **Supabase** (base de datos + autenticación)
-- **Vercel** (deploy)
-- **Tailwind CSS** (estilos)
-
----
-
-## Paso 1 — Configurar Supabase
-
-### 1.1 Crear el proyecto
-1. Entrá a [supabase.com](https://supabase.com)
-2. Hacé click en **New Project**
-3. Nombre: `gran-dt-lprc`
-4. Elegí una contraseña segura para la base de datos
-5. Región: `South America (São Paulo)` — la más cercana a Argentina
-6. Esperá ~2 minutos a que el proyecto se inicialice
-
-### 1.2 Ejecutar el SQL de setup
-1. En el menú lateral, hacé click en **SQL Editor**
-2. Hacé click en **New query**
-3. Abrí el archivo `supabase-setup.sql` que viene en este proyecto
-4. Copiá **todo** el contenido y pegalo en el editor de Supabase
-5. Hacé click en **Run** (o `Ctrl + Enter`)
-6. Deberías ver: `Success. No rows returned`
-
-Esto crea todas las tablas, las reglas de seguridad, las funciones de cálculo y los datos iniciales (temporada, divisiones, fechas y reglas de puntaje).
-
-### 1.3 Obtener las credenciales
-1. En el menú lateral, hacé click en **Settings → API**
-2. Copiá:
-   - **Project URL** → algo como `https://abcxyz.supabase.co`
-   - **anon public key** → una clave larga que empieza con `eyJ...`
+[![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-green?logo=supabase)](https://supabase.com/)
+[![Vercel](https://img.shields.io/badge/Deploy-Vercel-black?logo=vercel)](https://vercel.com/)
 
 ---
 
-## Paso 2 — Configurar el proyecto localmente
+## 🎯 Características
 
-### 2.1 Instalar Node.js
-Si no lo tenés instalado:
-- Descargá Node.js desde [nodejs.org](https://nodejs.org) (versión LTS)
-- Instalalo normalmente
+- **Constructor de Equipos** — Arma tu propio equipo de rugby seleccionando jugadores disponibles
+- **Puntaje en Vivo** — Cálculo automático de puntos basado en estadísticas de jugadores (tries, conversiones, penales, tarjetas)
+- **Gestión de Fechas** — Controla cuándo los jugadores pueden modificar sus equipos
+- **Panel de Administrador** — Gestiona jugadores, carga estadísticas de partidos, calcula rankings
+- **Soporte Multi-división** — Suporta múltiples categorías (Primera, Intermedia, Pre A/B/C, M22)
+- **Diseño Responsivo** — Interfaz mobile-friendly con Tailwind CSS
+- **Autenticación en Tiempo Real** — Autenticación segura de usuarios mediante Supabase
 
-### 2.2 Abrir una terminal
-- **Mac:** `Cmd + Space` → escribí "Terminal" → Enter
-- **Windows:** Buscá "PowerShell" o "Símbolo del sistema"
+---
 
-### 2.3 Instalar dependencias
-En la terminal, navegá a la carpeta del proyecto:
+## 📋 Requisitos
+
+- **Node.js** 18+ (versión LTS recomendada)
+- **npm** o **yarn**
+- Cuenta en **Supabase** ([capa gratuita disponible](https://supabase.com/))
+- Cuenta en **Vercel** para deploy ([capa gratuita disponible](https://vercel.com/))
+
+---
+
+## 🚀 Inicio Rápido
+
+### 1. Clonar e Instalar
+
 ```bash
-cd ruta/a/gran-dt-lprc
+git clone https://github.com/tu-usuario/gran-dt-lprc.git
+cd gran-dt-lprc
 npm install
 ```
 
-### 2.4 Configurar las variables de entorno
-1. Abrí el archivo `.env.local` en el proyecto
-2. Reemplazá los valores con los que copiaste de Supabase:
+### 2. Configurar Supabase
 
-```
-NEXT_PUBLIC_SUPABASE_URL=https://TU_PROYECTO.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...TU_CLAVE...
+1. Crea un nuevo proyecto en [supabase.com](https://supabase.com/)
+2. Dirígete al **Editor SQL** y ejecuta el contenido de `supabase-setup.sql`
+3. Copia tu **URL del Proyecto** y **Clave Anon** desde **Configuración → API**
+
+### 3. Configurar Variables de Entorno
+
+Copia `.env.local.example` a `.env.local` e ingresa tus credenciales de Supabase:
+
+```bash
+cp .env.local.example .env.local
 ```
 
-### 2.5 Iniciar el servidor de desarrollo
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-clave-anon-aqui
+```
+
+### 4. Ejecutar el Servidor de Desarrollo
+
 ```bash
 npm run dev
 ```
 
-Abrí el navegador en: **http://localhost:3000**
+Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
 ---
 
-## Paso 3 — Cargar el plantel de jugadores
-
-Una vez que tengas el Excel con los jugadores:
-
-### Opción A: Desde el panel admin (recomendada)
-1. Registrate en la app con tu email
-2. En Supabase → **Table Editor → profiles**, buscá tu usuario y cambiá `is_admin` a `true`
-3. Volvé a la app → aparecerá el menú **⚙️ Admin**
-4. Entrá a **Admin → Jugadores → + Nuevo jugador** y cargalos uno por uno
-
-### Opción B: Importación masiva
-Si tenés muchos jugadores, podés usar el SQL Editor de Supabase para insertar todos de una vez con un comando INSERT masivo. Avisame cuando tengas el Excel y te preparo el SQL.
-
----
-
-## Paso 4 — Crear las fixtures (partidos por fecha)
-
-Por cada fecha del torneo necesitás crear los partidos. Desde el SQL Editor:
-
-```sql
--- Ejemplo: partidos de la Fecha 1
-INSERT INTO fixtures (season_id, gameweek_id, home_team_id, away_team_id, scheduled_at) VALUES
-  (1, 1, 1, 2, '2026-03-08 15:00:00+00'),  -- Primera vs Intermedia
-  (1, 1, 3, 4, '2026-03-08 15:00:00+00'),  -- Pre A vs Pre B
-  (1, 1, 5, 6, '2026-03-08 15:00:00+00');  -- Pre C vs M22
-```
-
-> Los IDs de los equipos (real_teams) se pueden ver en Supabase → Table Editor → real_teams.
-
----
-
-## Paso 5 — Deploy en Vercel
-
-### 5.1 Subir el código a GitHub
-1. Creá una cuenta en [github.com](https://github.com) si no tenés
-2. Creá un repositorio nuevo (privado está bien)
-3. Subí el proyecto:
-```bash
-git init
-git add .
-git commit -m "Initial commit - Gran DT LPRC"
-git remote add origin https://github.com/TU_USUARIO/gran-dt-lprc.git
-git push -u origin main
-```
-
-### 5.2 Conectar con Vercel
-1. Entrá a [vercel.com](https://vercel.com)
-2. Hacé click en **Add New → Project**
-3. Importá el repositorio de GitHub que acabas de crear
-4. En **Environment Variables**, agregá:
-   - `NEXT_PUBLIC_SUPABASE_URL` = tu URL de Supabase
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = tu clave anon
-5. Hacé click en **Deploy**
-
-En ~2 minutos vas a tener la app en línea con una URL tipo `gran-dt-lprc.vercel.app`.
-
----
-
-## Paso 6 — Flujo semanal para el admin
-
-Cada semana del torneo seguís este proceso:
-
-```
-Jueves/Viernes
-└── La fecha está "Abierta" → los participantes pueden armar su equipo
-
-Sábado (antes del partido)
-└── Admin → Fechas → Bloquear fecha
-    └── Nadie más puede cambiar su equipo
-
-Sábado/Domingo (después de los partidos)
-└── Admin → Cargar Stats → seleccionás cada partido y cargás las estadísticas
-    └── (tries, conversiones, penales, tarjetas, etc.)
-
-Domingo/Lunes
-└── Admin → Fechas → "En cálculo" → "Cerrar y calcular"
-    └── Se calculan automáticamente todos los puntajes
-    └── Se actualiza el ranking
-
-Jueves
-└── Publicar resultados en Instagram ✅
-```
-
----
-
-## Estructura del proyecto
+## 📁 Estructura del Proyecto
 
 ```
 gran-dt-lprc/
-├── app/                    # Páginas (Next.js App Router)
-│   ├── page.tsx            # Inicio
-│   ├── auth/               # Login / Registro
-│   ├── equipo/             # Armar mi equipo
-│   ├── tabla/              # Tabla general
-│   ├── fecha/              # Equipo de la Fecha
-│   ├── jugadores/          # Lista de jugadores
-│   └── admin/              # Panel de administrador
-│       ├── page.tsx        # Dashboard admin
-│       ├── stats/          # Cargar estadísticas
-│       ├── fechas/         # Gestión de fechas
-│       └── jugadores/      # ABM de jugadores
-├── components/
-│   ├── layout/             # Header, AppShell
-│   └── campo/              # Campo de juego, selector de jugadores
+├── app/                     # Páginas del App Router de Next.js
+│   ├── page.tsx             # Inicio / Dashboard
+│   ├── auth/                # Login y Registro
+│   ├── equipo/              # Interfaz de constructor de equipos
+│   ├── tabla/               # Tabla general de la liga
+│   ├── fecha/               # Equipo de la fecha actual
+│   ├── jugadores/           # Directorio de jugadores
+│   └── admin/               # Panel del administrador
+│       ├── stats/           # Carga de estadísticas de partidos
+│       ├── fechas/          # Gestión de fechas
+│       └── jugadores/       # Gestión de jugadores
+├── components/              # Componentes React reutilizables
+│   ├── layout/              # Header, navegación, shell
+│   ├── ui/                  # Componentes UI
+│   ├── campo/               # Campo de rugby y selector de jugadores
+│   └── admin/               # Componentes específicos del admin
 ├── lib/
-│   ├── supabase/           # Clientes de Supabase (browser/server/middleware)
-│   └── utils.ts            # Funciones utilitarias
+│   ├── supabase/            # Configuración del cliente de Supabase
+│   └── utils.ts             # Funciones utilitarias
 ├── types/
-│   └── index.ts            # Tipos TypeScript de toda la app
-├── supabase-setup.sql      # SQL completo para ejecutar en Supabase
-└── .env.local              # Variables de entorno (no subir a GitHub)
+│   └── index.ts             # Definiciones de tipos TypeScript
+├── supabase-setup.sql       # Schema de la base de datos e datos iniciales
+└── .env.local               # Variables de entorno (no subir a git)
 ```
 
 ---
 
-## Preguntas frecuentes
+## 🛠️ Configuración del Admin
 
-**¿Cómo hago a alguien administrador?**
-En Supabase → Table Editor → profiles → buscá al usuario → cambiá `is_admin` a `true`.
+Después de crear una cuenta de usuario:
 
-**¿Qué pasa si me equivoco cargando las stats?**
-Podés volver a cargar las stats de un jugador y se sobreescribirán. Si ya cerraste la fecha, usá el botón "Recalcular" en Admin → Fechas.
+1. En Supabase, dirígete a **Editor de Tablas → profiles**
+2. Encuentra tu usuario y establece `is_admin` en `true`
+3. Reinicia la aplicación — el menú **⚙️ Admin** aparecerá
 
-**¿Puedo cambiar las reglas de puntaje?**
-Sí. En Supabase → Table Editor → scoring_rules podés modificar los valores. Al recalcular una fecha se usan las reglas actuales.
+### Flujo de Trabajo del Admin
 
-**¿Cómo agrego el plantel desde el Excel?**
-Avisame cuando tengas el Excel y te preparo un SQL de inserción masiva para cargarlo de una sola vez.
+Cada fecha sigue este ciclo:
+
+#### Jueves-Viernes:  
+Los jugadores pueden armar y modificar sus equipos
+
+#### Sábado (Pre-Partido):  
+El admin bloquea la fecha — no se permiten más cambios
+
+#### Sábado-Domingo (Post-Partido):  
+El admin carga las estadísticas de los partidos (tries, conversiones, penales, tarjetas, etc.)
+
+#### Domingo-Lunes:  
+El admin activa "Calcular" — los puntajes se calculan automáticamente y la tabla se actualiza
 
 ---
 
-## Soporte
+## 📊 Schema de la Base de Datos
 
-Si algo no funciona, revisá:
-1. Que el `.env.local` tenga las credenciales correctas
-2. Que el SQL de setup se haya ejecutado sin errores en Supabase
-3. Que Node.js esté instalado (`node --version` en la terminal)
+Tablas principales:
+
+- **players** — Jugadores de rugby individuales con posición, estado y asignación de equipo
+- **real_teams** — Los equipos de tu liga de rugby (ej: Primera, Intermedia, etc.)
+- **seasons** — Temporadas del torneo
+- **gameweeks** — Fechas individuales o jornadas de fixture
+- **fixtures** — Partidos entre equipos
+- **player_stats** — Desempeño individual de jugadores por fecha
+- **scoring_rules** — Valores de puntos para diferentes acciones (try = 5 puntos, conversión = 2, etc.)
+
+Consulta `supabase-setup.sql` para ver el schema completo.
+
+---
+
+## 🚢 Deploy
+
+### Desplegar en Vercel (Recomendado)
+
+1. Sube el código a GitHub
+2. Ve a [vercel.com](https://vercel.com/) e importa tu repositorio
+3. Agrega las variables de entorno:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+4. Haz clic en **Deploy**
+
+Tu aplicación estará en línea en ~2 minutos con una URL como `tu-proyecto.vercel.app`.
+
+---
+
+## ⚙️ Personalización
+
+### Reglas de Puntaje
+
+Modifica los valores de puntos en Supabase → **Editor de Tablas → scoring_rules**. Cuando recalcules las fechas, se aplican las reglas actuales.
+
+### Equipos y Divisiones
+
+Edita los equipos en Supabase → **Editor de Tablas → real_teams**. Actualiza los campos `name` y `description` según sea necesario.
+
+### Posiciones
+
+Las posiciones de los jugadores están definidas en la base de datos. Posiciones comunes de rugby: Hooker, Prop, Lock, Flanker, Number 8, Halfback, Five-Eighth, Wing, Fullback.
+
+---
+
+## 🤝 Contribuciones
+
+¡Las contribuciones son bienvenidas! Por favor:
+
+1. Haz un fork del repositorio
+2. Crea una rama de características (`git checkout -b feature/caracteristica-asombrosa`)
+3. Haz commits con tus cambios (`git commit -m 'Agregar característica asombrosa'`)
+4. Sube a la rama (`git push origin feature/caracteristica-asombrosa`)
+5. Abre un Pull Request
+
+---
+
+## 📝 Licencia
+
+Este proyecto está licenciado bajo la Licencia MIT — consulta el archivo [LICENSE](LICENSE) para más detalles.
+
+---
+
+## 🆘 Solución de Problemas
+
+**"Fallo al conectar con Supabase"**
+- Verifica que `.env.local` tenga la URL y clave API correctas
+- Confirma que el proyecto de Supabase esté activo en el dashboard
+
+**"Setup SQL falló"**
+- Asegúrate de que todo el archivo `supabase-setup.sql` se haya ejecutado sin errores
+- Revisa los mensajes de error de Supabase en la salida del Editor SQL
+
+**"Problemas con node_modules"**
+- Elimina la carpeta `node_modules` y ejecuta `npm install` nuevamente
+- Intenta limpiar el caché de npm: `npm cache clean --force`
+
+**"El menú Admin no aparece"**
+- Verifica que `is_admin` esté establecido en `true` en la tabla profiles
+- Reinicia el servidor de desarrollo: detén y ejecuta `npm run dev`
+
+---
+
+## 📧 Soporte y Preguntas
+
+Para problemas o preguntas, abre un issue en GitHub. Revisa los issues existentes primero para evitar duplicados.
+
+---
+
+## 🏏 ¿Qué es Fantasy Rugby?
+
+En fantasy rugby, los jugadores arman un equipo de rugbiers reales y ganan puntos según el desempeño actual de esos jugadores en los partidos. ¡Intenta armar el mejor equipo para trepar en la tabla de la liga!

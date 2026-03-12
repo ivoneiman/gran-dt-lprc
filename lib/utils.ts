@@ -21,6 +21,9 @@ export function validateTeamSelection(
 ): string | null {
   const selectedIds = Object.values(selection.slots).filter(Boolean) as number[]
 
+  // build mapping of position -> selected division (if provided by UI)
+  const slotDivs = (selection as any).slotDivisions as Partial<Record<PlayerPosition, string>> | undefined
+
   if (selectedIds.length < 15) {
     return `Faltan ${15 - selectedIds.length} jugadores para completar el equipo.`
   }
@@ -33,11 +36,14 @@ export function validateTeamSelection(
     return 'El capitán debe ser uno de los 15 jugadores seleccionados.'
   }
 
-  // Count per division
+  // Count per division (respect any chosen target division per slot)
   const divisionCount: Record<string, number> = {}
   for (const id of selectedIds) {
+    const pos = Object.keys(selection.slots).find(k => (selection.slots as any)[k] === id)
     const p = players.find(x => x.id === id)
-    const div = p?.real_teams?.name ?? 'Unknown'
+    const div = pos && slotDivs && (slotDivs as any)[pos]
+      ? (slotDivs as any)[pos]
+      : p?.real_teams?.name ?? 'Unknown'
     divisionCount[div] = (divisionCount[div] ?? 0) + 1
   }
 
@@ -53,6 +59,34 @@ export function validateTeamSelection(
     }
   }
 
+  // Prevent duplicate display names across selected slots
+  const selectedNames: string[] = Object.values(selection.slots)
+    .filter(Boolean)
+    .map(id => players.find(p => p.id === id))
+    .filter(Boolean)
+    .map((p: any) => p.display_name)
+
+  const nameCounts: Record<string, number> = {}
+  for (const n of selectedNames) nameCounts[n] = (nameCounts[n] ?? 0) + 1
+  for (const [name, cnt] of Object.entries(nameCounts)) {
+    if (cnt > 1) return `El jugador "${name}" está seleccionado más de una vez.`
+  }
+
+  // Ensure M22 slots are occupied by original M22 players and prevent Pre C -> M22
+  for (const [posKey, idVal] of Object.entries(selection.slots)) {
+    if (!idVal) continue
+    const pos = posKey as unknown as PlayerPosition
+    const targetDiv = slotDivs && (slotDivs as any)[pos]
+    const p = players.find(x => x.id === idVal)
+    const originalDiv = p?.real_teams?.name
+    if (targetDiv === 'M22' && originalDiv !== 'M22') {
+      return 'Los cupos de M22 deben ser ocupados por jugadores originarios de M22.'
+    }
+    if (originalDiv === 'Pre C' && targetDiv === 'M22') {
+      return 'Los jugadores de Pre C no pueden bajar a M22 por restricción de edad.'
+    }
+  }
+
   return null
 }
 
@@ -61,11 +95,15 @@ export function getDivisionCount(
   players: { id: number; real_teams?: { name: string } }[]
 ): Record<string, number> {
   const selectedIds = Object.values(selection.slots).filter(Boolean) as number[]
+  const slotDivs = (selection as any).slotDivisions as Partial<Record<PlayerPosition, string>> | undefined
   const count: Record<string, number> = {}
   for (const div of DIVISIONES) count[div] = 0
   for (const id of selectedIds) {
+    const pos = Object.keys(selection.slots).find(k => (selection.slots as any)[k] === id)
     const p = players.find(x => x.id === id)
-    const div = p?.real_teams?.name
+    const div = pos && slotDivs && (slotDivs as any)[pos]
+      ? (slotDivs as any)[pos]
+      : p?.real_teams?.name
     if (div) count[div] = (count[div] ?? 0) + 1
   }
   return count

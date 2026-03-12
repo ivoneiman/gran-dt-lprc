@@ -91,7 +91,6 @@ INSERT INTO players (real_team_id, first_name, last_name, position, status, acti
   (4, 'Manuel', 'Paradela', 'FULLBACK', 'active', true), -- Pre B
   (4, 'Bautista', 'Renga', 'PILAR_IZQ', 'active', true), -- Pre B
   (4, 'Geronimo', 'Di Martino ', 'CENTRO_IZQ', 'active', true), -- Pre B
-  (4, 'Tomassoni Francisco', 'Rodriguez', 'ALA_IZQ', 'active', true), -- Pre B
   (4, 'Bautista', 'Ventafridda', 'HOOKER', 'active', true), -- Pre B
   (4, 'Bautista', 'Ventafridda', 'PILAR_IZQ', 'active', true), -- Pre B
   (4, 'Juan Pedro', 'Featherston', 'APERTURA', 'active', true), -- Pre B
@@ -99,14 +98,14 @@ INSERT INTO players (real_team_id, first_name, last_name, position, status, acti
   (4, 'Juan Domingo', 'Nicoletti', 'PILAR_DER', 'active', true), -- Pre B
   (5, 'Homero', 'Boffi', 'FULLBACK', 'active', true), -- Pre B/C
   (5, 'Mateo', 'Canosa', 'ALA_BACK_IZQ', 'active', true), -- Pre C
-  (5, 'Bautista', 'Castagnet', 'ALA_IZQ', 'active', true), -- Pre C
-  (5, 'Francisco', 'Castagnet', 'CENTRO_IZQ', 'active', true), -- Pre C
-  (5, 'Agustin', 'Cufré', 'ALA_IZQ', 'active', true), -- Pre C
-  (5, 'Salvador', 'Curuchaga', 'ALA_IZQ', 'active', true), -- Pre C
+  (5, 'Bautista', 'Castagnet', 'ALA_DER', 'active', true), -- Pre C
+  (5, 'Francisco', 'Castagnet', 'CENTRO_DER', 'active', true), -- Pre C
+  (5, 'Agustin', 'Cufré', 'ALA_DER', 'active', true), -- Pre C
+  (5, 'Salvador', 'Curuchaga', 'ALA_DER', 'active', true), -- Pre C
   (5, 'Alessandro Fermin', 'D', 'APERTURA', 'active', true), -- Pre C
   (5, 'Pedro', 'Daroda', 'ALA_IZQ', 'active', true), -- Pre C
   (5, 'Geronimo', 'Dettler', 'ALA_BACK_IZQ', 'active', true), -- Pre C
-  (5, 'Eduardo', 'Ferrario', 'ALA_IZQ', 'active', true), -- Pre C
+  (5, 'Eduardo', 'Ferrario', 'ALA_DER', 'active', true), -- Pre C
   (5, 'Máximo', 'Festa', 'APERTURA', 'active', true), -- Pre C
   (5, 'Bes Tomás', 'Garcia', 'PILAR_IZQ', 'active', true), -- Pre C
   (5, 'Larcher Augusto', 'Garcia', 'FULLBACK', 'active', true), -- Pre C
@@ -115,6 +114,7 @@ INSERT INTO players (real_team_id, first_name, last_name, position, status, acti
   (5, 'Vito', 'Marchetto', 'ALA_IZQ', 'active', true), -- Pre C
   (5, 'Marco', 'Musi', 'ALA_BACK_IZQ', 'active', true), -- Pre C
   (5, 'Tomás', 'Ostrofsky', 'SEGUNDO_LINE_IZQ', 'active', true), -- Pre C
+  (5, 'Tomassoni Francisco', 'Rodriguez', 'ALA_IZQ', 'active', true), -- Pre C
   (5, 'Valentin', 'Ozog', 'SEGUNDO_LINE_IZQ', 'active', true), -- Pre C
   (5, 'Felipe', 'Pastor', 'MEDIO_SCRUM', 'active', true), -- Pre C
   (5, 'Franco', 'Ronco', 'APERTURA', 'active', true), -- Pre C
@@ -130,7 +130,7 @@ INSERT INTO players (real_team_id, first_name, last_name, position, status, acti
   (5, 'Lazzari Dino', 'De', 'ALA_BACK_IZQ', 'active', true), -- Pre C
   (5, 'Manuel', 'Rodriguez', 'PILAR_IZQ', 'active', true), -- Pre C
   (5, 'Ignacio', 'Scarpinelli', 'PILAR_DER', 'active', true), -- Pre C
-  (5, 'Monaco Manuel', 'García', 'MEDIO_SCRUM', 'active', true), -- Pre C
+  (5, 'Manuel', 'García Monaco', 'MEDIO_SCRUM', 'active', true), -- Pre C
   (5, 'Tobías', 'Campillo', 'MEDIO_SCRUM', 'active', true), -- Pre C
   (5, 'Lautaro', 'Cañon', 'MEDIO_SCRUM', 'active', true), -- Pre C
   (5, 'Cristian', 'Terragni', 'PILAR_IZQ', 'active', true), -- Pre C
@@ -145,7 +145,7 @@ INSERT INTO players (real_team_id, first_name, last_name, position, status, acti
   (5, 'Lautaro', 'Roman', 'PILAR_IZQ', 'active', true), -- Pre C
   (5, 'Valentino', 'Caseres Ipiña', 'HOOKER', 'active', true), -- Pre C
   (5, 'Lautaro', 'Cáseres', 'HOOKER', 'active', true), -- Pre C
-  (5, 'Tufo Franco', 'Del', 'MEDIO_SCRUM', 'active', true), -- Pre C
+  (5, 'Franco', 'Del Tufo', 'MEDIO_SCRUM', 'active', true), -- Pre C
   (5, 'Enrico', 'Delucchi', 'HOOKER', 'active', true), -- Pre C
   (5, 'Guillermo', 'Fontana', 'CENTRO_DER', 'active', true), -- Pre C
   (5, 'Santiago', 'Massano', 'ALA_BACK_DER', 'active', true), -- Pre C
@@ -154,7 +154,7 @@ INSERT INTO players (real_team_id, first_name, last_name, position, status, acti
   (5, 'Juan Cruz', 'Scarpinelli', 'OCTAVO', 'active', true), -- Pre C
   (5, 'Jaoquin', 'Sorrarain', 'FULLBACK', 'active', true), -- Pre C
   (5, 'Luca', 'Marrodan', 'PILAR_DER', 'active', true), -- Pre C
-  (5, 'José', 'Bernasconi', 'APERTURA', 'active', true), -- Pre C
+  (6, 'José', 'Bernasconi', 'APERTURA', 'active', true), -- M22
   (6, 'Felipe', 'Addiechi', 'FULLBACK', 'active', true), -- M22
   (6, 'Tomás', 'Akimenko', 'PILAR_IZQ', 'active', true), -- M22
   (6, 'Agustin', 'Alconada', 'HOOKER', 'active', true), -- M22
@@ -187,7 +187,7 @@ INSERT INTO players (real_team_id, first_name, last_name, position, status, acti
   (6, 'Manuel', 'Coste', 'ALA_IZQ', 'active', true), -- M22
   (6, 'Juan Ignacio', 'Crispo', 'CENTRO_IZQ', 'active', true), -- M22
   (6, 'Agustin', 'Cuneo', 'ALA_IZQ', 'active', true), -- M22
-  (6, 'Baraibar Iñaki', 'Cunha', 'CENTRO_IZQ', 'active', true), -- M22
+  (6, 'Baraibar Iñaki', 'Cunha', 'CENTRO_DER', 'active', true), -- M22
   (6, 'Francisco', 'Dagostino', 'MEDIO_SCRUM', 'active', true), -- M22
   (6, 'Bautista', 'Disanti', 'ALA_IZQ', 'active', true), -- M22
   (6, 'Theo', 'Echegoyen', 'PILAR_IZQ', 'active', true), -- M22
@@ -196,7 +196,7 @@ INSERT INTO players (real_team_id, first_name, last_name, position, status, acti
   (6, 'Matias', 'Ferrario', 'MEDIO_SCRUM', 'active', true), -- M22
   (6, 'Augusto', 'Festa', 'OCTAVO', 'active', true), -- M22
   (6, 'Felipe', 'Franchino', 'ALA_IZQ', 'active', true), -- M22
-  (6, 'Lucio', 'Galan', 'CENTRO_IZQ', 'active', true), -- M22
+  (6, 'Lucio', 'Galan', 'CENTRO_DER', 'active', true), -- M22
   (6, 'Jeronimo', 'Gallero', 'ALA_BACK_IZQ', 'active', true), -- M22
   (6, 'Mateo', 'Garat', 'CENTRO_IZQ', 'active', true), -- M22
   (6, 'Manuel', 'Garganta', 'ALA_BACK_IZQ', 'active', true), -- M22
@@ -212,10 +212,10 @@ INSERT INTO players (real_team_id, first_name, last_name, position, status, acti
   (6, 'Valentin', 'Lerga', 'SEGUNDO_LINE_IZQ', 'active', true), -- M22
   (6, 'Franco', 'Lizama', 'PILAR_IZQ', 'active', true), -- M22
   (6, 'Dimarco Lucas', 'Lopez', 'MEDIO_SCRUM', 'active', true), -- M22
-  (6, 'Simpson Mariano', 'Lopez', 'CENTRO_IZQ', 'active', true), -- M22
+  (6, 'Simpson Mariano', 'Lopez', 'CENTRO_DER', 'active', true), -- M22
   (6, 'Tiago', 'Maiocchi', 'SEGUNDO_LINE_IZQ', 'active', true), -- M22
   (6, 'Bautista', 'Maitini', 'ALA_IZQ', 'active', true), -- M22
-  (6, 'Francisco', 'Manuele', 'CENTRO_IZQ', 'active', true), -- M22
+  (6, 'Francisco', 'Manuele', 'CENTRO_DER', 'active', true), -- M22
   (6, 'Santino', 'Marchetto', 'APERTURA', 'active', true), -- M22
   (6, 'Felipe', 'Mayocchi', 'APERTURA', 'active', true), -- M22
   (6, 'Abel', 'Medina', 'PILAR_IZQ', 'active', true), -- M22
@@ -239,7 +239,7 @@ INSERT INTO players (real_team_id, first_name, last_name, position, status, acti
   (6, 'Segundo', 'Ricciardi', 'ALA_BACK_IZQ', 'active', true), -- M22
   (6, 'Salvador', 'Rinaldi', 'MEDIO_SCRUM', 'active', true), -- M22
   (6, 'Federico', 'Rossi', 'ALA_IZQ', 'active', true), -- M22
-  (6, 'Ignacio', 'Sarasqueta', 'CENTRO_IZQ', 'active', true), -- M22
+  (6, 'Ignacio', 'Sarasqueta', 'CENTRO_DER', 'active', true), -- M22
   (6, 'Salvador', 'Sebastia', 'ALA_IZQ', 'active', true), -- M22
   (6, 'Santiago', 'Seitz', 'SEGUNDO_LINE_IZQ', 'active', true), -- M22
   (6, 'Santiago', 'Sierra', 'ALA_IZQ', 'active', true), -- M22

@@ -9,7 +9,7 @@ interface SelectorJugadorProps {
   position: PlayerPosition
   players: Player[]
   selection: TeamSelection
-  onSelect: (position: PlayerPosition, playerId: number) => void
+  onSelect: (position: PlayerPosition, playerId: number, targetDivision: string) => void
   onClose: () => void
   onSetCapitan: (playerId: number) => void
 }
@@ -33,12 +33,38 @@ export default function SelectorJugador({
       return matchSearch && matchDiv && matchPosition
     })
   }, [players, filterDiv, search, position])
+  const [choosingPlayerId, setChoosingPlayerId] = useState<number | null>(null)
 
-  const isDisabled = (player: Player) => {
-    const div = player.real_teams?.name ?? ''
+  const allowedTargetDivisions = (player: Player) => {
+    const divs = DIVISIONES
+    const current = player.real_teams?.name ?? ''
+    const idx = divs.indexOf(current)
+    if (current === 'Primera') return ['Primera', 'Intermedia']
+    if (current === 'M22') return ['M22', 'Pre C', 'Pre B']
+    if (current === 'Pre C') return ['Pre B', 'Pre C'] // cannot go down to M22
+    const out: string[] = []
+    if (idx > 0) out.push(divs[idx - 1])
+    if (idx >= 0) out.push(divs[idx])
+    if (idx < divs.length - 1) out.push(divs[idx + 1])
+    return out
+  }
+
+  const isDisabledForAnyTarget = (player: Player) => {
+    const divName = player.real_teams?.name ?? ''
     const alreadyInOtherSlot = selectedIds.includes(player.id) && currentPlayerId !== player.id
-    const divFull = divCount[div] >= 3 && !selectedIds.includes(player.id)
-    return alreadyInOtherSlot || divFull
+
+    // duplicate display_name check (prevent same name twice even if different ids)
+    const selectedNames = Object.values(selection.slots)
+      .filter(Boolean)
+      .map(id => players.find(p => p.id === id)?.display_name)
+      .filter(Boolean) as string[]
+    const nameDuplicate = selectedNames.includes(player.display_name) && currentPlayerId !== player.id
+
+    const targets = allowedTargetDivisions(player)
+    // if all possible targets are full (>=3) and player not already selected, then can't pick
+    const allTargetsBlocked = targets.every(t => (divCount[t] ?? 0) >= 3 && !selectedIds.includes(player.id))
+
+    return alreadyInOtherSlot || nameDuplicate || allTargetsBlocked
   }
 
   return (
@@ -102,14 +128,24 @@ export default function SelectorJugador({
             </div>
           )}
           {filtered.map((player) => {
-            const disabled = isDisabled(player)
+            const disabled = isDisabledForAnyTarget(player)
             const isSelected = currentPlayerId === player.id
             const isCapitan = selection.captain_player_id === player.id
+            const targets = allowedTargetDivisions(player)
 
             return (
               <div
                 key={player.id}
-                onClick={() => { if (!disabled) onSelect(position, player.id) }}
+                onClick={() => {
+                  if (disabled) return
+                  // if only one target available, select immediately
+                  if (targets.length === 1) {
+                    onSelect(position, player.id, targets[0])
+                    setChoosingPlayerId(null)
+                    return
+                  }
+                  setChoosingPlayerId(player.id)
+                }}
                 className={cn(
                   'flex items-center justify-between p-3 rounded-lg border transition-all',
                   isSelected
@@ -132,6 +168,24 @@ export default function SelectorJugador({
                     {player.real_teams?.name ?? ''}
                   </span>
                 </div>
+                {/* Division choice (inline) */}
+                {choosingPlayerId === player.id && (
+                  <div className="mt-2 flex gap-2">
+                    {targets.map(t => {
+                      const blocked = (divCount[t] ?? 0) >= 3 && !selectedIds.includes(player.id)
+                      return (
+                        <button
+                          key={t}
+                          onClick={(e) => { e.stopPropagation(); if (blocked) return; onSelect(position, player.id, t); setChoosingPlayerId(null) }}
+                          className={cn('px-2 py-1 text-xs rounded border', blocked ? 'opacity-40 cursor-not-allowed' : 'hover:bg-lprc-dorado/10')}
+                        >
+                          {t} {(divCount[t] ?? 0)}/3
+                        </button>
+                      )
+                    })}
+                    <button onClick={(e) => { e.stopPropagation(); setChoosingPlayerId(null) }} className="px-2 py-1 text-xs rounded border">Cancelar</button>
+                  </div>
+                )}
                 {isSelected && (
                   <button
                     onClick={(e) => { e.stopPropagation(); onSetCapitan(player.id) }}

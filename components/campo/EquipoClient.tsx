@@ -64,11 +64,13 @@ export default function EquipoClient() {
       if (snap) {
         setSnapshot(snap)
         const slots: Partial<Record<PlayerPosition, number>> = {}
+        const slotDivisions: Partial<Record<PlayerPosition, string>> = {}
         for (const sp of (snap as { fantasy_team_snapshot_players: { player_id: number; players: Player }[] }).fantasy_team_snapshot_players) {
           const pos = sp.players.position as PlayerPosition
           slots[pos] = sp.player_id
+          slotDivisions[pos] = sp.players.real_teams?.name
         }
-        setSelection({ slots, captain_player_id: snap.captain_player_id })
+        setSelection({ slots, slotDivisions, captain_player_id: snap.captain_player_id })
         setIsLocked(!!snap.locked_at)
       }
     }
@@ -247,8 +249,12 @@ export default function EquipoClient() {
           position={activeSlot}
           players={players}
           selection={selection}
-          onSelect={(pos, id) => {
-            setSelection(prev => ({ ...prev, slots: { ...prev.slots, [pos]: id } }))
+          onSelect={(pos, id, targetDiv) => {
+            setSelection(prev => ({
+              ...prev,
+              slots: { ...prev.slots, [pos]: id },
+              slotDivisions: { ...(prev.slotDivisions ?? {}), [pos]: targetDiv }
+            }))
             setActiveSlot(null)
           }}
           onClose={() => setActiveSlot(null)}

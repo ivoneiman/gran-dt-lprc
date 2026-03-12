@@ -64,7 +64,7 @@ export default function Campo({ selection, players, onSlotClick, readonly, showP
                     </div>
                     {player && (
                       <div className="font-condensed text-[9px] text-lprc-dorado/80 truncate max-w-[64px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                        {player.real_teams?.name?.toUpperCase() ?? ''}
+                        {(selection.slotDivisions && selection.slotDivisions[pos]) ? selection.slotDivisions[pos]?.toUpperCase() : (player.real_teams?.name?.toUpperCase() ?? '')}
                       </div>
                     )}
                     {showPoints && finalPts !== null && player && (

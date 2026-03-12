@@ -241,5 +241,7 @@ export const STATUS_LABELS: Record<PlayerStatus, string> = {
 export interface TeamSelection {
   // key = PlayerPosition, value = player id
   slots: Partial<Record<PlayerPosition, number>>
+  // optional: target division chosen for each slot (when a player is selected to play for a different division)
+  slotDivisions?: Partial<Record<PlayerPosition, string>>
   captain_player_id: number | null
 }

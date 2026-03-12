@@ -84,6 +84,16 @@ export default function EquipoClient() {
     const error = validateTeamSelection(selection, players as { id: number; real_teams?: { name: string } }[])
     if (error) { setMessage({ type: 'err', text: error }); return }
 
+    if (isLocked || currentGw?.status !== 'open') {
+      setMessage({ type: 'err', text: 'La fecha está cerrada o bloqueada.' })
+      return
+    }
+
+    if (remainingChanges <= 0) {
+      setMessage({ type: 'err', text: 'Ya usaste tus 3 cambios para esta fecha.' })
+      return
+    }
+
     setSaving(true)
     setMessage(null)
     const { data: { user } } = await supabase.auth.getUser()
@@ -101,15 +111,41 @@ export default function EquipoClient() {
         setFantasyTeam(ft)
       }
 
-      // Upsert snapshot
-      const { data: snap, error: snapErr } = await supabase.from('fantasy_team_snapshots')
-        .upsert({
+    // Create or update snapshot with save count
+    let snap: FantasyTeamSnapshot
+
+    if (snapshot) {
+      const newSaveCount = (snapshot.save_count ?? 0) + 1
+
+      const { data: updatedSnap, error: snapErr } = await supabase
+        .from('fantasy_team_snapshots')
+        .update({
+          captain_player_id: selection.captain_player_id,
+          save_count: newSaveCount,
+          last_saved_at: new Date().toISOString(),
+        })
+        .eq('id', snapshot.id)
+        .select()
+        .single()
+
+      if (snapErr) throw snapErr
+      snap = updatedSnap as FantasyTeamSnapshot
+    } else {
+      const { data: newSnap, error: snapErr } = await supabase
+        .from('fantasy_team_snapshots')
+        .insert({
           fantasy_team_id: ftId,
           gameweek_id: currentGw.id,
           captain_player_id: selection.captain_player_id,
-        }, { onConflict: 'fantasy_team_id,gameweek_id' })
-        .select().single()
+          save_count: 1,
+          last_saved_at: new Date().toISOString(),
+        })
+        .select()
+        .single()
+
       if (snapErr) throw snapErr
+      snap = newSnap as FantasyTeamSnapshot
+    }
 
       // Delete existing snapshot players
       await supabase.from('fantasy_team_snapshot_players').delete().eq('snapshot_id', snap.id)
@@ -126,7 +162,9 @@ export default function EquipoClient() {
       if (spErr) throw spErr
 
       setSnapshot(snap)
-      setMessage({ type: 'ok', text: '✅ ¡Equipo guardado correctamente!' })
+      const usedChanges = snap.save_count ?? 0
+      const leftChanges = Math.max(0, 3 - usedChanges)
+      setMessage({ type: 'ok', text: `✅ Equipo guardado correctamente. Te quedan ${leftChanges} cambios.` })
     } catch (e: unknown) {
       setMessage({ type: 'err', text: e instanceof Error ? e.message : 'Error al guardar' })
     } finally {
@@ -136,7 +174,9 @@ export default function EquipoClient() {
 
   const divCount = getDivisionCount(selection, players as { id: number; real_teams?: { name: string } }[])
   const selectedCount = Object.values(selection.slots).filter(Boolean).length
-  const canEdit = !isLocked && (currentGw?.status === 'open')
+  const saveCount = snapshot?.save_count ?? 0
+  const remainingChanges = Math.max(0, 3 - saveCount)
+  const canEdit = !isLocked && currentGw?.status === 'open' && remainingChanges > 0
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
@@ -164,10 +204,8 @@ export default function EquipoClient() {
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">Estado</div>
-          <div className={cn('badge text-xs mt-1', isLocked ? 'bg-yellow-400/10 text-yellow-400' : 'bg-green-400/10 text-green-400')}>
-            {isLocked ? '🔒 Bloqueado' : '✏️ Borrador'}
-          </div>
+          <div className="stat-label">Cambios</div>
+          <div className="stat-value text-2xl">{remainingChanges}</div>
         </div>
         <div className="stat-card">
           <div className="stat-label">Fecha</div>
@@ -175,6 +213,12 @@ export default function EquipoClient() {
         </div>
       </div>
 
+
+      {!isLocked && currentGw?.status === 'open' && (
+        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-4 font-condensed text-sm text-blue-300">
+          Te quedan <strong>{remainingChanges}</strong> guardados para esta fecha.
+        </div>
+      )}
       {/* Locked warning */}
       {isLocked && (
         <div className="bg-yellow-400/10 border border-yellow-400/30 rounded-lg p-4 mb-4 font-condensed text-sm text-yellow-400">

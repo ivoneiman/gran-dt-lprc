@@ -24,7 +24,7 @@ export default async function TablaPage() {
   const { data: leaderboard } = latestGw
     ? await supabase
         .from('leaderboard_snapshots')
-        .select('*')
+        .select('*, fantasy_team(id, name, user_id), profiles(team_name)')
         .eq('season_id', season?.id ?? 0)
         .eq('gameweek_id', latestGw.id)
         .order('rank_position')
@@ -52,6 +52,18 @@ export default async function TablaPage() {
   for (const s of gwScores ?? []) {
     scoreMap[`${s.fantasy_team_id}_${s.gameweek_id}`] = s.final_points
   }
+  // If tournament hasn't started, fetch all fantasy teams to display
+  const participantsBase = leaderboard?.length
+    ? leaderboard
+    : (await supabase
+        .from('fantasy_teams')
+        .select('*')
+        .eq('season_id', season?.id ?? 0)
+        .order('name'))
+      .data ?? []
+
+  // Include nickname directly from fantasy_teams
+  const participants = participantsBase.map(p => ({ ...p }))
 
   return (
     <AppShell>
@@ -74,14 +86,14 @@ export default async function TablaPage() {
               </tr>
             </thead>
             <tbody>
-              {!leaderboard || leaderboard.length === 0 ? (
+              {!participants || participants.length === 0 ? (
                 <tr>
                   <td colSpan={99} className="text-center py-12 font-condensed text-white/30">
                     El torneo aún no tiene fechas cerradas.
                   </td>
                 </tr>
               ) : (
-                leaderboard.map((entry, i) => (
+                participants.map((entry, i) => (
                   <tr key={entry.id} className={cn(i === 0 && 'bg-lprc-dorado/[0.06]')}>
                     <td>
                       <span className={cn(
@@ -95,17 +107,17 @@ export default async function TablaPage() {
                       </span>
                     </td>
                     <td>
-                      <span className="font-condensed font-semibold">{entry.display_name}</span>
+                      <span className="font-condensed font-semibold">{entry.team_name ?? entry.name ?? entry.display_name} ({entry.nickname})</span>
                     </td>
                     {(closedGws ?? []).map(gw => (
                       <td key={gw.id} className="text-center">
                         <span className="font-condensed text-xs font-bold text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded">
-                          {scoreMap[`${entry.fantasy_team_id}_${gw.id}`] ?? '—'}
+                          {scoreMap[`${entry.id}_${gw.id}`] ?? '—'}
                         </span>
                       </td>
                     ))}
                     <td className="text-right">
-                      <span className="font-display text-xl text-lprc-dorado">{entry.points_total}</span>
+                      <span className="font-display text-xl text-lprc-dorado">{entry.points_total ?? 0}</span>
                     </td>
                   </tr>
                 ))

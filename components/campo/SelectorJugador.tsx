@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import { DIVISIONES, POSITION_LABELS, type PlayerPosition, type TeamSelection } from '@/types'
 import type { Player } from '@/types'
 import { cn, getDivisionCount } from '@/lib/utils'
+import { allowedTargetDivisions } from '@/lib/eligibility'
 
 interface SelectorJugadorProps {
   position: PlayerPosition
@@ -34,20 +35,6 @@ export default function SelectorJugador({
     })
   }, [players, filterDiv, search, position])
   const [choosingPlayerId, setChoosingPlayerId] = useState<number | null>(null)
-
-  const allowedTargetDivisions = (player: Player) => {
-    const divs = DIVISIONES
-    const current = player.real_teams?.name ?? ''
-    const idx = divs.indexOf(current)
-    if (current === 'Primera') return ['Primera', 'Intermedia']
-    if (current === 'M22') return ['M22', 'Pre C', 'Pre B']
-    if (current === 'Pre C') return ['Pre B', 'Pre C'] // cannot go down to M22
-    const out: string[] = []
-    if (idx > 0) out.push(divs[idx - 1])
-    if (idx >= 0) out.push(divs[idx])
-    if (idx < divs.length - 1) out.push(divs[idx + 1])
-    return out
-  }
 
   const isDisabledForAnyTarget = (player: Player) => {
     const divName = player.real_teams?.name ?? ''

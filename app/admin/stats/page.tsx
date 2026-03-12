@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { Player, Fixture, Gameweek, Season } from '@/types'
+import { DIVISIONES, type Player, type Fixture, type Gameweek, type Season } from '@/types'
 import { cn } from '@/lib/utils'
+import { allowedTargetDivisions } from '@/lib/eligibility'
 
 const SCORING_FIELDS = [
   { key: 'started',        label: 'Titular',            type: 'checkbox' },
@@ -32,6 +33,42 @@ const emptyForm: StatsForm = {
   custom_points_adjustment: 0,
 }
 
+function normalizeText(s: string) {
+  return (s ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
+
+function fixtureDisplayLabel(f: Fixture) {
+  const homeName = f.home_team?.name
+  const awayName = f.away_team?.name
+  if (!homeName || !awayName) return `${f.home_team_id} vs ${f.away_team_id}`
+
+  const divisionByCategory: Record<string, string> = {
+    primera: 'Primera',
+    intermedia: 'Intermedia',
+    pre_a: 'Pre A',
+    pre_b: 'Pre B',
+    pre_c: 'Pre C',
+    m22: 'M22',
+  }
+
+  const homeDivisionLabel =
+    (homeName && DIVISIONES.includes(homeName) ? homeName : null) ??
+    (f.home_team?.category ? divisionByCategory[f.home_team.category] : null) ??
+    null
+  const awayDivisionLabel =
+    (awayName && DIVISIONES.includes(awayName) ? awayName : null) ??
+    (f.away_team?.category ? divisionByCategory[f.away_team.category] : null) ??
+    null
+
+  if (homeDivisionLabel && !awayDivisionLabel) return `${homeDivisionLabel} vs ${awayName}`
+  if (awayDivisionLabel && !homeDivisionLabel) return `${awayDivisionLabel} vs ${homeName}`
+  return `${homeName} vs ${awayName}`
+}
+
 export default function AdminStatsPage() {
   const supabase = createClient()
   const [season, setSeason] = useState<Season | null>(null)
@@ -41,10 +78,86 @@ export default function AdminStatsPage() {
   const [selectedFixtureId, setSelectedFixtureId] = useState<number | null>(null)
   const [players, setPlayers] = useState<Player[]>([])
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null)
+  const [playerSearch, setPlayerSearch] = useState('')
+  const [showEligibleOnly, setShowEligibleOnly] = useState(true)
   const [form, setForm] = useState<StatsForm>(emptyForm)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
   const [existingStats, setExistingStats] = useState<Record<number, StatsForm>>({})
+
+  const fixtureLabels = useMemo(() => {
+    const map: Record<number, string> = {}
+    const clubName = 'La Plata'
+
+    // Group fixtures that look like "club vs rival" (no division info present).
+    // If multiple exist for the same rival within the GW, label them Primera/Intermedia/... by order.
+    const groups: Record<string, Fixture[]> = {}
+
+    for (const f of fixtures) {
+      const homeName = f.home_team?.name
+      const awayName = f.away_team?.name
+      const baseLabel = fixtureDisplayLabel(f)
+
+      // If we can already infer division, use that.
+      if (baseLabel !== `${homeName ?? f.home_team_id} vs ${awayName ?? f.away_team_id}`) {
+        map[f.id] = baseLabel
+        continue
+      }
+
+      if (!homeName || !awayName) {
+        map[f.id] = baseLabel
+        continue
+      }
+
+      const isClubHome = homeName === clubName
+      const isClubAway = awayName === clubName
+      if (!isClubHome && !isClubAway) {
+        map[f.id] = baseLabel
+        continue
+      }
+
+      const rivalName = isClubHome ? awayName : homeName
+      const key = `${clubName}__${rivalName}`
+      groups[key] = groups[key] ?? []
+      groups[key].push(f)
+    }
+
+    for (const [key, list] of Object.entries(groups)) {
+      const rivalName = key.split('__')[1] ?? ''
+      const sorted = [...list].sort((a, b) => a.id - b.id)
+      for (let i = 0; i < sorted.length; i++) {
+        const div = DIVISIONES[i] ?? `Equipo ${i + 1}`
+        map[sorted[i].id] = `${div} vs ${rivalName}`
+      }
+    }
+
+    // Fill any remaining fixtures
+    for (const f of fixtures) {
+      if (!map[f.id]) map[f.id] = fixtureDisplayLabel(f)
+    }
+
+    return map
+  }, [fixtures])
+
+  const selectedDivision = useMemo(() => {
+    if (!selectedFixtureId) return null
+    const label = fixtureLabels[selectedFixtureId]
+    if (!label) return null
+    const found = DIVISIONES.find(d => label.toLowerCase().startsWith(`${d.toLowerCase()} vs`))
+    return found ?? null
+  }, [selectedFixtureId, fixtureLabels])
+
+  const filteredPlayers = useMemo(() => {
+    const q = normalizeText(playerSearch)
+    const bySearch = q
+      ? players.filter(p => normalizeText(p.display_name).includes(q))
+      : players
+
+    if (!showEligibleOnly) return bySearch
+    if (!selectedDivision) return bySearch
+
+    return bySearch.filter(p => allowedTargetDivisions(p).includes(selectedDivision))
+  }, [players, playerSearch, showEligibleOnly, selectedDivision])
 
   useEffect(() => {
     supabase.from('seasons').select('*').eq('is_active', true).single()
@@ -129,8 +242,7 @@ export default function AdminStatsPage() {
                     selectedFixtureId === f.id
                       ? 'border-lprc-dorado bg-lprc-dorado/10 text-white'
                       : 'border-white/10 text-white/60 hover:border-lprc-dorado/40')}>
-                  {(f as unknown as { home_team?: { name: string }; away_team?: { name: string } }).home_team?.name ?? f.home_team_id} vs{' '}
-                  {(f as unknown as { home_team?: { name: string }; away_team?: { name: string } }).away_team?.name ?? f.away_team_id}
+                  {fixtureLabels[f.id] ?? fixtureDisplayLabel(f)}
                 </button>
               ))}
               {fixtures.length === 0 && <div className="text-white/30 text-xs font-condensed">No hay partidos para esta fecha.</div>}
@@ -141,19 +253,55 @@ export default function AdminStatsPage() {
         {selectedFixtureId && (
           <div className="card p-4">
             <div className="font-condensed text-xs tracking-widest text-white/40 uppercase mb-3">3. Seleccionar Jugador</div>
-            <div className="space-y-1 max-h-64 overflow-y-auto">
-              {players.map(p => (
-                <button key={p.id} onClick={() => handlePlayerSelect(p.id)}
-                  className={cn('w-full text-left px-3 py-2 rounded-lg border font-condensed text-sm transition-all flex justify-between items-center',
-                    selectedPlayerId === p.id
-                      ? 'border-lprc-dorado bg-lprc-dorado/10'
-                      : 'border-transparent hover:border-white/20',
-                    existingStats[p.id] && 'border-green-400/20'
-                  )}>
-                  <span>{p.display_name}</span>
-                  {existingStats[p.id] && <span className="text-green-400 text-xs">✓</span>}
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="font-condensed text-xs text-white/40">
+                {selectedDivision ? <>División: <span className="text-white/70 font-bold">{selectedDivision}</span></> : <>División: <span className="text-white/50">—</span></>}
+              </div>
+              <button
+                type="button"
+                className={cn('btn-outline px-3 py-2 text-xs whitespace-nowrap', !selectedDivision && 'opacity-50 cursor-not-allowed')}
+                onClick={() => { if (!selectedDivision) return; setShowEligibleOnly(v => !v) }}
+                title={!selectedDivision ? 'No se pudo inferir la división para este fixture' : undefined}
+              >
+                {showEligibleOnly ? 'Ver todos' : 'Solo elegibles'}
+              </button>
+            </div>
+            <div className="mb-2 flex gap-2">
+              <input
+                className="input-field py-2"
+                placeholder="Buscar jugador por nombre..."
+                value={playerSearch}
+                onChange={(e) => setPlayerSearch(e.target.value)}
+              />
+              {playerSearch.trim() && (
+                <button
+                  type="button"
+                  className="btn-outline px-3 py-2 text-xs whitespace-nowrap"
+                  onClick={() => setPlayerSearch('')}
+                >
+                  Limpiar
                 </button>
-              ))}
+              )}
+            </div>
+            <div className="space-y-1 max-h-64 overflow-y-auto">
+              {filteredPlayers.length === 0 ? (
+                <div className="text-white/30 text-xs font-condensed px-1 py-2">
+                  Sin jugadores para esta búsqueda.
+                </div>
+              ) : (
+                filteredPlayers.map(p => (
+                  <button key={p.id} onClick={() => handlePlayerSelect(p.id)}
+                    className={cn('w-full text-left px-3 py-2 rounded-lg border font-condensed text-sm transition-all flex justify-between items-center',
+                      selectedPlayerId === p.id
+                        ? 'border-lprc-dorado bg-lprc-dorado/10'
+                        : 'border-transparent hover:border-white/20',
+                      existingStats[p.id] && 'border-green-400/20'
+                    )}>
+                    <span>{p.display_name}</span>
+                    {existingStats[p.id] && <span className="text-green-400 text-xs">✓</span>}
+                  </button>
+                ))
+              )}
             </div>
           </div>
         )}

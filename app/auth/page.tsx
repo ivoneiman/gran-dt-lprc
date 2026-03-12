@@ -11,7 +11,7 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
-  const [form, setForm] = useState({ email: '', password: '', full_name: '' })
+  const [form, setForm] = useState({ email: '', password: '', full_name: '', nickname: '' })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -19,50 +19,44 @@ export default function AuthPage() {
     setLoading(true)
 
     try {
-      if (mode === 'register') {
-      const { data, error } = await supabase.auth.signUp({
-        email: form.email,
-        password: form.password,
-        options: { data: { full_name: form.full_name } }
-      })
-
-      if (error) throw error
-
-      const newUserId = data.user?.id
-
-      if (newUserId) {
-        const { error: profileErr } = await supabase
-          .from('profiles')
-          .upsert({
-            id: newUserId,
-            full_name: form.full_name,
-            nickname: null,
-            is_admin: false,
+        if (mode === 'register') {
+          const { data, error: signUpError } = await supabase.auth.signUp({
+            email: form.email,
+            password: form.password,
+            options: { data: { full_name: form.full_name, nickname: form.nickname } },
           })
 
-        if (profileErr) throw profileErr
-      }
+          if (signUpError) throw signUpError
 
-      const { error: loginError } = await supabase.auth.signInWithPassword({
-        email: form.email,
-        password: form.password,
-      })
+          // The Supabase trigger automatically creates the profile record
+          // using the data supplied in options.data. No manual upsert is
+          // required.
 
-      if (loginError) throw loginError
-
-      router.push('/')
-      router.refresh()
-    } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: form.email,
-          password: form.password,
-        })
-        if (error) throw error
-        router.push('/')
-        router.refresh()
-      }
+          // Automatically log in after successful registration
+          const { error: loginError } = await supabase.auth.signInWithPassword({
+            email: form.email,
+            password: form.password,
+          })
+          if (loginError) {
+            // Ignore "not confirmed" errors that may occur immediately after sign‑up
+            if (!loginError.message?.toLowerCase().includes('not confirmed')) {
+              throw loginError
+            }
+          }
+          router.push('/')
+          setError(null)
+        } else {
+          const { error: loginError } = await supabase.auth.signInWithPassword({
+            email: form.email,
+            password: form.password,
+          })
+          if (loginError) throw loginError
+          router.push('/')
+        }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error inesperado')
+      // Preserve the original error message, handling Supabase error objects
+      const errMsg = (err as any)?.message ?? 'Error desconocido'
+      setError(errMsg)
     } finally {
       setLoading(false)
     }
@@ -107,19 +101,34 @@ export default function AuthPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === 'register' && (
-              <div>
-                <label className="font-condensed text-xs tracking-widest text-white/40 uppercase block mb-1.5">
-                  Nombre completo
-                </label>
-                <input
-                  className="input-field"
-                  type="text"
-                  placeholder="Juan Rodríguez"
-                  value={form.full_name}
-                  onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-                  required
-                />
-              </div>
+              <> {/* Fragment to group multiple inputs */}
+                <div>
+                  <label className="font-condensed text-xs tracking-widest text-white/40 uppercase block mb-1.5">
+                    Nombre completo
+                  </label>
+                  <input
+                    className="input-field"
+                    type="text"
+                    placeholder="Ej: Lucas José Mundiña"
+                    value={form.full_name}
+                    onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="font-condensed text-xs tracking-widest text-white/40 uppercase block mb-1.5">
+                    Nickname
+                  </label>
+                  <input
+                    className="input-field"
+                    type="text"
+                    placeholder="Ej: Mundi el wing + Lento"
+                    value={form.nickname}
+                    onChange={(e) => setForm({ ...form, nickname: e.target.value })}
+                    required
+                  />
+                </div>
+              </>
             )}
             <div>
               <label className="font-condensed text-xs tracking-widest text-white/40 uppercase block mb-1.5">

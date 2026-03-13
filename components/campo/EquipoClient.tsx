@@ -29,6 +29,45 @@ export default function EquipoClient() {
   const [loading, setLoading] = useState(true)
   const [isLocked, setIsLocked] = useState(false)
 
+  // ---------- Helper to generate a random valid team ----------
+  const generateRandomTeam = useCallback(() => {
+    if (!players.length) return
+    // Shuffle players copy
+    const shuffled = [...players]
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    }
+
+    const newSlots: Partial<Record<PlayerPosition, number>> = {}
+    const newDivisions: Partial<Record<PlayerPosition, string>> = {}
+    const divisionCount: Record<string, number> = {}
+
+    // Helper to check if adding a player respects division limits (max 3)
+    const canAdd = (player: Player) => {
+      const div = player.real_teams?.name ?? ''
+      return (divisionCount[div] ?? 0) < 3
+    }
+
+    // Iterate over all positions and pick first suitable player
+    for (const pos of ALL_POSITIONS) {
+      const candidate = shuffled.find(p => p.position === pos && canAdd(p))
+      if (candidate) {
+        newSlots[pos] = candidate.id
+        const div = candidate.real_teams?.name ?? ''
+        newDivisions[pos] = div
+        divisionCount[div] = (divisionCount[div] ?? 0) + 1
+      }
+    }
+
+    // Ensure at least one per division – if any division missing, we leave it to validation later
+    // Set captain to the player in the 10th position (index 9 of ALL_POSITIONS)
+    const captainPos = ALL_POSITIONS[9]
+    const captainId = newSlots[captainPos] ?? null
+
+    setSelection({ slots: newSlots as Record<PlayerPosition, number>, slotDivisions: newDivisions as Record<PlayerPosition, string>, captain_player_id: captainId })
+  }, [players])
+
   // Carga inicial de datos
   const load = useCallback(async () => {
     setLoading(true)
@@ -70,10 +109,11 @@ export default function EquipoClient() {
         setSnapshot(snap)
         const slots: Partial<Record<PlayerPosition, number>> = {}
         const slotDivisions: Partial<Record<PlayerPosition, string>> = {}
-        for (const sp of (snap as { fantasy_team_snapshot_players: { player_id: number; players: Player }[] }).fantasy_team_snapshot_players) {
+        for (const sp of (snap as { fantasy_team_snapshot_players: { player_id: number; players: Player; target_division?: string }[] }).fantasy_team_snapshot_players) {
           const pos = sp.players.position as PlayerPosition
           slots[pos] = sp.player_id
-          slotDivisions[pos] = sp.players.real_teams?.name
+          // Use stored target_division if present, otherwise fallback to player's original division
+          slotDivisions[pos] = sp.target_division ?? sp.players.real_teams?.name
         }
         setSelection({ slots, slotDivisions, captain_player_id: snap.captain_player_id })
         setIsLocked(!!snap.locked_at)
@@ -89,6 +129,12 @@ export default function EquipoClient() {
   const handleSave = async () => {
     const error = validateTeamSelection(selection, players as { id: number; real_teams?: { name: string } }[])
     if (error) { setMessage({ type: 'err', text: error }); return }
+
+    // ---- New validation: team name is required ----
+    if (teamName.trim() === '') {
+      setMessage({ type: 'err', text: 'Debés ingresar un nombre para el equipo antes de guardarlo.' })
+      return
+    }
 
     if (isLocked || currentGw?.status !== 'open') {
       setMessage({ type: 'err', text: 'La fecha está cerrada o bloqueada.' })
@@ -138,13 +184,30 @@ export default function EquipoClient() {
       // Upsert fantasy_team
       let ftId = fantasyTeam?.id
       if (!ftId) {
+        // No fantasy team yet – create one using the entered name (or fallback)
         const { data: ft, error: ftErr } = await supabase.from('fantasy_teams')
-          .upsert({ season_id: season.id, user_id: user.id, name: `Equipo de ${user.email}` })
+          .upsert({
+            season_id: season.id,
+            user_id: user.id,
+            // teamName is guaranteed to be non‑empty by the validation above
+            name: teamName.trim()
+          })
           .select().single()
         if (ftErr) throw ftErr
         ftId = ft.id
         setFantasyTeam(ft)
         setTeamName(ft.name ?? '')
+      } else {
+        // Fantasy team exists – ensure its name matches the entered teamName
+        if (teamName.trim() !== '' && fantasyTeam?.name !== teamName) {
+          const { error: updErr } = await supabase.from('fantasy_teams')
+            .update({ name: teamName })
+            .eq('id', ftId)
+          if (updErr) throw updErr
+          // Update local state with the new name
+          setFantasyTeam(prev => prev ? { ...prev, name: teamName } : prev)
+          setTeamName(teamName)
+        }
       }
 
     // Create or update snapshot with save count
@@ -192,6 +255,8 @@ export default function EquipoClient() {
         player_id: selection.slots[pos]!,
         slot_order: i + 1,
         is_starter: true,
+        // Preserve the division the user assigned for this slot (if any)
+        target_division: selection.slotDivisions?.[pos] ?? null,
       })).filter(r => r.player_id)
 
       const { error: spErr } = await supabase.from('fantasy_team_snapshot_players').insert(rows)
@@ -365,6 +430,16 @@ export default function EquipoClient() {
                 className="w-full rounded bg-white/5 text-white placeholder-white/40 p-2"
                 placeholder="Ej. Los Tigres"
               />
+              {/* Button to generate a random valid team */}
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={generateRandomTeam}
+                  className="btn-gold w-full mb-2"
+                >
+                  🎲 Generar Equipo Aleatorio
+                </button>
+              )}
               <button onClick={handleSave} disabled={saving} className="btn-gold w-full">
                 {saving ? 'Guardando...' : '💾 Guardar Equipo'}
               </button>
